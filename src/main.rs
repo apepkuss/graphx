@@ -6,6 +6,11 @@ pub struct DiGraph {
     pub nodes: HashMap<String, Node>,
 }
 impl DiGraph {
+    pub fn new() -> Self {
+        DiGraph {
+            nodes: HashMap::new(),
+        }
+    }
     pub fn add_node(&mut self, node: Node) {
         self.nodes.insert(node.name.clone(), node);
     }
@@ -73,9 +78,9 @@ impl Hash for Node {
     }
 }
 
-pub struct DiGraphMatcher {
-    pub g1: &'static DiGraph,
-    pub g2: &'static DiGraph,
+pub struct DiGraphMatcher<'a> {
+    pub g1: &'a DiGraph,
+    pub g2: &'a DiGraph,
 
     pub g1_nodes: HashSet<String>,
     pub g2_nodes: HashSet<String>,
@@ -114,8 +119,8 @@ pub struct DiGraphMatcher {
 
     pub depth: usize,
 }
-impl DiGraphMatcher {
-    pub fn new(g1: &'static DiGraph, g2: &'static DiGraph) -> Self {
+impl<'a> DiGraphMatcher<'a> {
+    pub fn new(g1: &'a DiGraph, g2: &'a DiGraph) -> Self {
         DiGraphMatcher {
             g1: g1,
             g2: g2,
@@ -281,12 +286,14 @@ impl DiGraphMatcher {
 pub struct DiGMState {
     pub g1_node: Option<String>,
     pub g2_node: Option<String>,
+    pub depth: usize,
 }
 impl DiGMState {
-    pub fn new() -> Self {
+    pub fn new(matcher: &DiGraphMatcher) -> Self {
         DiGMState {
             g1_node: None,
             g2_node: None,
+            depth: matcher.core_1.len(),
         }
     }
 
@@ -302,10 +309,10 @@ impl DiGMState {
     }
 }
 
-pub fn subgraph_isomorphisms_iter(g1: &'static DiGraph, g2: &'static DiGraph) {
-    let mut state = DiGMState::new();
-    let mut matcher = DiGraphMatcher::new(g1, g2);
+pub fn subgraph_isomorphisms_iter<'a>(g1: &'a DiGraph, g2: &'a DiGraph) {
+    let mut matcher = DiGraphMatcher::new(&g1, &g2);
     matcher.test = String::from("subgraph");
+    let mut state = DiGMState::new(&matcher);
     let mut mapping = Vec::new();
     try_match(&mut matcher, &mut state, &mut mapping);
 }
@@ -731,5 +738,8 @@ pub fn semantic_feasibility(_g1_node: String, _g2_node: String) -> bool {
 }
 
 fn main() {
-    println!("Hello, world!");
+    let g1 = DiGraph::new();
+    let g2 = DiGraph::new();
+    subgraph_isomorphisms_iter(&g1, &g2);
+    
 }
