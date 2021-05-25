@@ -11,13 +11,29 @@ impl DiGraph {
             nodes: HashMap::new(),
         }
     }
+
     pub fn add_node(&mut self, node: Node) {
         self.nodes.insert(node.name.clone(), node);
     }
 
-    pub fn add_edge(&mut self, from: &mut Node, to: &mut Node) {
-        from.successors.insert(to.name.clone());
-        to.predecessors.insert(from.name.clone());
+    pub fn add_edge(&mut self, from: Option<&str>, to: Option<&str>) {
+        if from.is_some() {
+            let name = from.unwrap();
+            self.nodes.entry(name.to_string()).or_insert(Node::new(name));
+        }
+        
+        if to.is_some() {
+            let name = to.unwrap();
+            self.nodes.entry(name.to_string()).or_insert(Node::new(name));
+        }
+
+        if from.is_some() && to.is_some() {
+            let source = self.nodes.get_mut(from.unwrap()).unwrap();
+            source.successors.insert(to.unwrap().to_string());
+
+            let target = self.nodes.get_mut(to.unwrap()).unwrap();
+            target.predecessors.insert(from.unwrap().to_string());
+        }
     }
 
     pub fn predecessors(&self, name: &str) -> Vec<&Node> {
@@ -206,8 +222,8 @@ impl<'a> DiGraphMatcher<'a> {
         // R_in, R_out and R_new for pruning the search tree
         // R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
         if !self.r_in(g1_node, g2_node)
-            || self.r_out(g1_node, g2_node)
-            || self.r_new(g1_node, g2_node)
+            || !self.r_out(g1_node, g2_node)
+            || !self.r_new(g1_node, g2_node)
         {
             return false;
         }
@@ -742,9 +758,17 @@ impl DiGMState {
 }
 
 fn main() {
-    let g1 = DiGraph::new();
-    let g2 = DiGraph::new();
+    let mut g1 = DiGraph::new();
+    g1.add_edge(Some("A"), Some("B"));
+    g1.add_edge(Some("B"), Some("C"));
+    println!("g1: {:?}", g1);
+    assert!(g1.node_count() == 3);
+    let mut g2 = DiGraph::new();
+    g2.add_edge(Some("Y"), Some("Z"));
+    assert!(g2.node_count() == 2);
+    println!("g2: {:?}", g2);
     let mut matcher = DiGraphMatcher::new(&g1, &g2);
     let mut mapping: Vec<Vec<(String, String)>> = Vec::new();
     matcher.subgraph_isomorphisms_iter(&mut mapping);
+    assert!(mapping.len() == 2);
 }
