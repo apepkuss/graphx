@@ -81,6 +81,9 @@ pub struct DiGraphMatcher {
     pub g2_nodes: HashSet<String>,
     pub g2_node_order: HashMap<String, usize>,
 
+    // Declare that we will be searching for a graph-graph isomorphism.
+    pub test: String,
+
     // core_1[n] contains the index of the node paired with n, which is m, provided n is in the mapping.
     // core_2[m] contains the index of the node paired with m, which is n, provided m is in the mapping.
     // core_1.len() == number of nodes in G1
@@ -114,8 +117,8 @@ pub struct DiGraphMatcher {
 impl DiGraphMatcher {
     pub fn new(g1: &'static DiGraph, g2: &'static DiGraph) -> Self {
         DiGraphMatcher {
-            g1,
-            g2,
+            g1: g1,
+            g2: g2,
             g1_nodes: g1.nodes.keys().map(|x| x.clone()).collect(),
             g2_nodes: g2.nodes.keys().map(|x| x.clone()).collect(),
             g2_node_order: g2
@@ -126,6 +129,7 @@ impl DiGraphMatcher {
                 .collect::<Vec<(String, usize)>>()
                 .into_iter()
                 .collect::<HashMap<String, usize>>(),
+            test: String::from("graph"),
             core_1: HashMap::new(),
             core_2: HashMap::new(),
             in_1: HashMap::new(),
@@ -272,49 +276,11 @@ impl DiGraphMatcher {
             self.out_2.remove(key.as_str());
         }
     }
-
-    // pub fn candidate_paris_iter(&self) -> PairIterator {
-    //     PairIterator::new(self)
-    // }
 }
 
 pub struct DiGMState {
     pub g1_node: Option<String>,
     pub g2_node: Option<String>,
-
-    // pub G1_nodes: HashSet<String>,
-    // pub G2_nodes: HashSet<String>,
-    // pub G2_node_order: HashMap<String, usize>,
-
-    // // core_1[n] contains the index of the node paired with n, which is m, provided n is in the mapping.
-    // // core_2[m] contains the index of the node paired with m, which is n, provided m is in the mapping.
-    // // core_1.len() == number of nodes in G1
-    // // pub core_1: HashMap<&'a Node, &'a Node>,
-    // pub core_1: HashMap<String, String>,
-    // // core_2.len() == n&'a str, &'a str in G2
-    // // pub core_2: HashMap<&'a Node, &'a Node>,
-    // pub core_2: HashMap<String, String>,
-
-    // // See the paper for definitions of G1(s), G2(s), M1, M2, Tin_1, Tin_2, Tout_1, and Tout_2
-    // //
-    // // in_1[n] is nonzero if n is either in M1(s) or Tin_1(s), in_1.len() == number of nodes in G1(s)
-    // // out_1[n] is nonzero if n is either in M1(s) or Tout_1(s), out_1.len() == number of nodes in G1(s)
-    // //
-    // // in_2[m] is nonzero if m is either in M2(s) or Tin_2(s), in_2.len() == number of nodes in G2(s)
-    // // out_2[m] is nonzero if m is either in M2(s) or Tout_2(s), out_2.len() == number of nodes in G2(s)
-    // //
-    // // The value stored is the depth of the search tree when the node became part of the corresponding set
-    // pub in_1: HashMap<String, usize>,
-    // pub in_2: HashMap<String, usize>,
-    // pub out_1: HashMap<String, usize>,
-    // pub out_2: HashMap<String, usize>,
-
-    // // pub state: DiGMState<'a>,
-
-    // // Provide a convenient way to access the isomorphism mapping.
-    // pub mapping: HashMap<String, String>,
-
-    // pub depth: usize,
 }
 impl DiGMState {
     pub fn new() -> Self {
@@ -334,137 +300,39 @@ impl DiGMState {
         // remove the node that was added from the core vectors.
         todo!("pop")
     }
-
 }
 
 pub fn subgraph_isomorphisms_iter(g1: &'static DiGraph, g2: &'static DiGraph) {
     let mut state = DiGMState::new();
     let mut matcher = DiGraphMatcher::new(g1, g2);
-    try_match(&mut matcher, &mut state);
+    matcher.test = String::from("subgraph");
+    let mut mapping = Vec::new();
+    try_match(&mut matcher, &mut state, &mut mapping);
 }
 
-pub fn try_match(mut matcher: &mut DiGraphMatcher, mut state: &mut DiGMState) {
+pub fn try_match(
+    mut matcher: &mut DiGraphMatcher,
+    mut state: &mut DiGMState,
+    mut mapping: &mut Vec<Vec<(String, String)>>,
+) {
     if matcher.core_1.len() == matcher.g2.node_count() {
-        todo!("save the final mapping.");
+        // Save the final mapping, otherwise garbage collection deletes it.
+        let res: Vec<(String, String)> = matcher
+            .core_1
+            .iter()
+            .map(|(g1_node_name, g2_node_name)| (g1_node_name.clone(), g2_node_name.clone()))
+            .collect();
+        mapping.push(res);
     } else {
-        // let mut c_pairs_iter = state.candidate_paris_iter();
-        // while let Some((G1_node, G2_node)) = c_pairs_iter.next() {
-        //     if syntactic_feasibility(&matcher, G1_node.clone(), G2_node.clone()) {
-        //         if semantic_feasibility(G1_node.clone(), G2_node.clone()) {
-        //             push_state(&mut state, G1_node.clone(), G2_node.clone());
-        //             try_match(&matcher, &mut state);
-        //             pop_state(&mut state);
-        //         }
-        //     }
-        // }
-
         for (g1_node, g2_node) in candidate_paris_iter(&matcher) {
             if syntactic_feasibility(&matcher, g1_node.clone(), g2_node.clone()) {
                 if semantic_feasibility(g1_node.clone(), g2_node.clone()) {
                     matcher.push_state(&mut state, g1_node.clone(), g2_node.clone());
-                    try_match(&mut matcher, &mut state);
+                    try_match(&mut matcher, &mut state, &mut mapping);
                     matcher.pop_state(g1_node.clone(), g2_node.clone());
                 }
             }
         }
-    }
-}
-
-// pub fn push_state<'a>(state: &mut DiGMState, g1_node_name: String, g2_node_name: String) {
-//     todo!()
-// }
-
-// pub fn pop_state<'a>(state: &mut DiGMState) {
-//     todo!()
-// }
-
-pub struct PairIterator {
-    pairs: Vec<(String, String)>,
-}
-impl PairIterator {
-    fn new(matcher: &DiGraphMatcher) -> Self {
-        // All computations are done using the current state!
-
-        let mut pairs = Vec::new();
-
-        // G1_nodes = self.G1_nodes
-        // G2_nodes = self.G2_nodes
-        // min_key = self.G2_node_order.__getitem__
-
-        // First we compute the out-terminal sets.
-        let mut tout_1 = Vec::new();
-        for name in matcher.out_1.keys() {
-            if !matcher.core_1.contains_key(name.as_str()) {
-                tout_1.push(name.clone());
-            }
-        }
-        let mut tout_2 = Vec::new();
-        for name in matcher.out_2.keys() {
-            if !matcher.core_2.contains_key(name.as_str()) {
-                tout_2.push(name.clone());
-            }
-        }
-
-        // If T1_out and T2_out are both nonempty.
-        // P(s) = Tout_1 x {min Tout_2}
-        if tout_1.len() > 0 && tout_2.len() > 0 {
-            for name1 in tout_1.iter() {
-                for name2 in tout_2.iter() {
-                    pairs.push((name1.clone(), name2.clone()));
-                }
-            }
-        } else {
-            // If T1_out and T2_out were both empty....
-            // We compute the in-terminal sets.
-
-            let mut tin_1 = Vec::new();
-            for name in matcher.in_1.keys() {
-                if !matcher.core_1.contains_key(name.as_str()) {
-                    tin_1.push(name.clone());
-                }
-            }
-            let mut tin_2 = Vec::new();
-            for name in matcher.in_2.keys() {
-                if !matcher.core_2.contains_key(name.as_str()) {
-                    tin_2.push(name.clone());
-                }
-            }
-
-            // If T1_in and T2_in are both nonempty.
-            // P(s) = T1_out x {min T2_out}
-            if tin_1.len() > 0 && tin_2.len() > 0 {
-                for node1 in tin_1.iter() {
-                    for node2 in tin_2.iter() {
-                        pairs.push((node1.clone(), node2.clone()));
-                    }
-                }
-            } else {
-                // If all terminal sets are empty...
-                // P(s) = (N_1 - M_1) x {min (N_2 - M_2)}
-
-                let m2: HashSet<_> = matcher.core_2.keys().map(|name| name.clone()).collect();
-                for name1 in matcher.g1_nodes.iter() {
-                    for name2 in matcher.g2_nodes.difference(&m2) {
-                        pairs.push((name1.to_string().clone(), name2.to_string().clone()));
-                    }
-                }
-            }
-        }
-        // pairs
-
-        PairIterator {
-            pairs: pairs
-                .iter()
-                .map(|(g1_node_name, g2_node_name)| (g1_node_name.clone(), g2_node_name.clone()))
-                .collect(),
-        }
-    }
-
-    pub fn next(&mut self) -> Option<(String, String)> {
-        while let Some(pair) = self.pairs.pop() {
-            return Some(pair);
-        }
-        None
     }
 }
 
