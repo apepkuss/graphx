@@ -147,8 +147,8 @@ impl<'a> DiGraphMatcher<'a> {
         }
     }
 
-    pub fn push_state(&mut self, state: &mut DiGMState, g1_node: String, g2_node: String) {
-        state.push(g1_node.clone(), g2_node.clone());
+    pub fn push_state(&mut self, _state: &mut DiGMState, g1_node: String, g2_node: String) {
+        // state.push(g1_node.clone(), g2_node.clone());
 
         self.core_1.insert(g1_node.clone(), g2_node.clone());
         self.core_2.insert(g2_node.clone(), g1_node.clone());
@@ -297,15 +297,130 @@ impl DiGMState {
         }
     }
 
-    pub fn push(&mut self, g1_node: String, g2_node: String) {
-        // Store the node that was added last.
-        self.g1_node = Some(g1_node);
-        self.g2_node = Some(g2_node);
+    pub fn initilize(&mut self, matcher: &mut DiGraphMatcher, g1_node: String, g2_node: String) {
+        self.g1_node = Some(g1_node.clone());
+        self.g2_node = Some(g2_node.clone());
+        self.depth = matcher.core_1.len();
+
+        // update matcher
+        matcher.core_1.insert(g1_node.clone(), g2_node.clone());
+        matcher.core_2.insert(g2_node.clone(), g1_node.clone());
+
+        // First we add the new nodes to Tin_1, Tin_2, Tout_1 and Tout_2
+        matcher.in_1.entry(g1_node.clone()).or_insert(self.depth);
+        matcher.out_1.entry(g1_node.clone()).or_insert(self.depth);
+        matcher.in_2.entry(g2_node.clone()).or_insert(self.depth);
+        matcher.out_2.entry(g2_node.clone()).or_insert(self.depth);
+
+        // Now we add every other node...
+
+        // Updates for Tin_1
+        let mut new_nodes = HashSet::new();
+        for name in matcher.core_1.keys() {
+            for predecessor in matcher.g1.predecessors(name) {
+                if !matcher.core_1.contains_key(predecessor.name.as_str()) {
+                    new_nodes.insert(predecessor);
+                }
+            }
+        }
+        for node in new_nodes {
+            matcher.in_1.entry(node.name.clone()).or_insert(self.depth);
+        }
+
+        // Updates for Tin_2
+        let mut new_nodes = HashSet::new();
+        for name in matcher.core_2.keys() {
+            for predecessor in matcher.g2.predecessors(name) {
+                if !matcher.core_2.contains_key(predecessor.name.as_str()) {
+                    new_nodes.insert(predecessor);
+                }
+            }
+        }
+        for node in new_nodes {
+            matcher.in_2.entry(node.name.clone()).or_insert(self.depth);
+        }
+
+        // Updates for Tout_1
+        let mut new_nodes = HashSet::new();
+        for name in matcher.core_1.keys() {
+            for successor in matcher.g1.successors(name) {
+                if !matcher.core_1.contains_key(successor.name.as_str()) {
+                    new_nodes.insert(successor);
+                }
+            }
+        }
+        for node in new_nodes {
+            matcher.out_1.entry(node.name.clone()).or_insert(self.depth);
+        }
+
+        // Updates for Tout_2
+        let mut new_nodes = HashSet::new();
+        for name in matcher.core_2.keys() {
+            for successor in matcher.g2.successors(name) {
+                if !matcher.core_2.contains_key(successor.name.as_str()) {
+                    new_nodes.insert(successor);
+                }
+            }
+        }
+        for node in new_nodes {
+            matcher.out_2.entry(node.name.clone()).or_insert(self.depth);
+        }
     }
 
-    pub fn pop(&mut self, _g1_node: String, _g2_node: String) {
-        // remove the node that was added from the core vectors.
-        todo!("pop")
+    pub fn restore(&self, matcher: &mut DiGraphMatcher) {
+        // First we remove the node that was added from the core vectors.
+        // Watch out! G1_node == 0 should evaluate to True.
+        if self.g1_node.is_some() && self.g2_node.is_some() {
+            matcher
+                .core_1
+                .remove_entry(self.g1_node.as_ref().unwrap().as_str());
+            matcher
+                .core_2
+                .remove_entry(self.g2_node.as_ref().unwrap().as_str());
+        }
+
+        // Now we revert the other four vectors.
+        // Thus, we delete all entries which have this depth level.
+
+        let keys: Vec<String> = matcher
+            .in_1
+            .iter()
+            .filter(|&(_, depth)| *depth == self.depth)
+            .map(|(name, _)| name.clone())
+            .collect();
+        for key in keys {
+            matcher.in_1.remove(key.as_str());
+        }
+
+        let keys: Vec<String> = matcher
+            .in_2
+            .iter()
+            .filter(|&(_, depth)| *depth == self.depth)
+            .map(|(name, _)| name.clone())
+            .collect();
+        for key in keys {
+            matcher.in_2.remove(key.as_str());
+        }
+
+        let keys: Vec<String> = matcher
+            .out_1
+            .iter()
+            .filter(|&(_, depth)| *depth == self.depth)
+            .map(|(name, _)| name.clone())
+            .collect();
+        for key in keys {
+            matcher.out_1.remove(key.as_str());
+        }
+
+        let keys: Vec<String> = matcher
+            .out_2
+            .iter()
+            .filter(|&(_, depth)| *depth == self.depth)
+            .map(|(name, _)| name.clone())
+            .collect();
+        for key in keys {
+            matcher.out_2.remove(key.as_str());
+        }
     }
 }
 
@@ -334,7 +449,7 @@ pub fn try_match(
         for (g1_node, g2_node) in candidate_paris_iter(&matcher) {
             if syntactic_feasibility(&matcher, g1_node.clone(), g2_node.clone()) {
                 if semantic_feasibility(g1_node.clone(), g2_node.clone()) {
-                    matcher.push_state(&mut state, g1_node.clone(), g2_node.clone());
+                    state.initilize(&mut matcher, g1_node.clone(), g2_node.clone());
                     try_match(&mut matcher, &mut state, &mut mapping);
                     matcher.pop_state(g1_node.clone(), g2_node.clone());
                 }
@@ -741,5 +856,4 @@ fn main() {
     let g1 = DiGraph::new();
     let g2 = DiGraph::new();
     subgraph_isomorphisms_iter(&g1, &g2);
-    
 }
