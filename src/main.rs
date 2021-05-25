@@ -147,6 +147,106 @@ impl<'a> DiGraphMatcher<'a> {
         }
     }
 
+    pub fn candidate_paris_iter(&self) -> Vec<(String, String)> {
+        // All computations are done using the current state!
+
+        let mut pairs = Vec::new();
+
+        // G1_nodes = self.G1_nodes
+        // G2_nodes = self.G2_nodes
+        // min_key = self.G2_node_order.__getitem__
+
+        // First we compute the out-terminal sets.
+        let mut tout_1 = Vec::new();
+        for name in self.out_1.keys() {
+            if !self.core_1.contains_key(name.as_str()) {
+                tout_1.push(name.clone());
+            }
+        }
+        let mut tout_2 = Vec::new();
+        for name in self.out_2.keys() {
+            if !self.core_2.contains_key(name.as_str()) {
+                tout_2.push(name.clone());
+            }
+        }
+
+        // If T1_out and T2_out are both nonempty.
+        // P(s) = Tout_1 x {min Tout_2}
+        if tout_1.len() > 0 && tout_2.len() > 0 {
+            let mut name2 = String::new();
+            let mut min_order = usize::MAX;
+            for key in tout_2.iter() {
+                let order = self.g2_node_order.get(key.as_str()).unwrap().clone();
+                if order < min_order {
+                    min_order = order;
+                    name2 = key.clone();
+                }
+            }
+            for name1 in tout_1.iter() {
+                pairs.push((name1.clone(), name2.clone()));
+            }
+        } else {
+            // If T1_out and T2_out were both empty....
+            // We compute the in-terminal sets.
+
+            let mut tin_1 = Vec::new();
+            for name in self.in_1.keys() {
+                if !self.core_1.contains_key(name.as_str()) {
+                    tin_1.push(name.clone());
+                }
+            }
+            let mut tin_2 = Vec::new();
+            for name in self.in_2.keys() {
+                if !self.core_2.contains_key(name.as_str()) {
+                    tin_2.push(name.clone());
+                }
+            }
+
+            // If T1_in and T2_in are both nonempty.
+            // P(s) = T1_out x {min T2_out}
+            if tin_1.len() > 0 && tin_2.len() > 0 {
+                let mut name2 = String::new();
+                let mut min_order = usize::MAX;
+                for key in tin_2.iter() {
+                    let order = self.g2_node_order.get(key.as_str()).unwrap().clone();
+                    if order < min_order {
+                        min_order = order;
+                        name2 = key.clone();
+                    }
+                }
+                for name1 in tin_1.iter() {
+                    pairs.push((name1.clone(), name2.clone()));
+                }
+            } else {
+                // If all terminal sets are empty...
+                // P(s) = (N_1 - M_1) x {min (N_2 - M_2)}
+
+                let m2 = self
+                    .core_2
+                    .keys()
+                    .map(|name| name.clone())
+                    .collect::<HashSet<String>>();
+
+                let diff_set = self.g2_nodes.difference(&m2);
+                let mut name2 = String::new();
+                let mut min_order = usize::MAX;
+                for key in diff_set {
+                    let order = self.g2_node_order.get(key.as_str()).unwrap().clone();
+                    if order < min_order {
+                        min_order = order;
+                        name2 = key.clone();
+                    }
+                }
+                for name1 in self.g1_nodes.iter() {
+                    if !self.core_1.contains_key(name1.as_str()) {
+                        pairs.push((name1.clone(), name2.clone()));
+                    }
+                }
+            }
+        }
+        pairs
+    }
+
     pub fn push_state(&mut self, _state: &mut DiGMState, g1_node: String, g2_node: String) {
         // state.push(g1_node.clone(), g2_node.clone());
 
@@ -446,93 +546,16 @@ pub fn try_match(
             .collect();
         mapping.push(res);
     } else {
-        for (g1_node, g2_node) in candidate_paris_iter(&matcher) {
+        for (g1_node, g2_node) in matcher.candidate_paris_iter() {
             if syntactic_feasibility(&matcher, g1_node.clone(), g2_node.clone()) {
                 if semantic_feasibility(g1_node.clone(), g2_node.clone()) {
                     state.initilize(&mut matcher, g1_node.clone(), g2_node.clone());
                     try_match(&mut matcher, &mut state, &mut mapping);
-                    matcher.pop_state(g1_node.clone(), g2_node.clone());
+                    state.restore(&mut matcher);
                 }
             }
         }
     }
-}
-
-/// Iterator over candidate pairs of nodes in G1 and G2.
-pub fn candidate_paris_iter(matcher: &DiGraphMatcher) -> Vec<(String, String)> {
-    // All computations are done using the current state!
-
-    let mut pairs = Vec::new();
-
-    // G1_nodes = self.G1_nodes
-    // G2_nodes = self.G2_nodes
-    // min_key = self.G2_node_order.__getitem__
-
-    // First we compute the out-terminal sets.
-    let mut tout_1 = Vec::new();
-    for name in matcher.out_1.keys() {
-        if !matcher.core_1.contains_key(name.as_str()) {
-            tout_1.push(name.clone());
-        }
-    }
-    let mut tout_2 = Vec::new();
-    for name in matcher.out_2.keys() {
-        if !matcher.core_2.contains_key(name.as_str()) {
-            tout_2.push(name.clone());
-        }
-    }
-
-    // If T1_out and T2_out are both nonempty.
-    // P(s) = Tout_1 x {min Tout_2}
-    if tout_1.len() > 0 && tout_2.len() > 0 {
-        for node1 in tout_1.iter() {
-            for node2 in tout_2.iter() {
-                pairs.push((node1.clone(), node2.clone()));
-            }
-        }
-    } else {
-        // If T1_out and T2_out were both empty....
-        // We compute the in-terminal sets.
-
-        let mut tin_1 = Vec::new();
-        for name in matcher.in_1.keys() {
-            if !matcher.core_1.contains_key(name.as_str()) {
-                tin_1.push(name.clone());
-            }
-        }
-        let mut tin_2 = Vec::new();
-        for name in matcher.in_2.keys() {
-            if !matcher.core_2.contains_key(name.as_str()) {
-                tin_2.push(name.clone());
-            }
-        }
-
-        // If T1_in and T2_in are both nonempty.
-        // P(s) = T1_out x {min T2_out}
-        if tin_1.len() > 0 && tin_2.len() > 0 {
-            for name1 in tin_1.iter() {
-                for name2 in tin_2.iter() {
-                    pairs.push((name1.clone(), name2.clone()));
-                }
-            }
-        } else {
-            // If all terminal sets are empty...
-            // P(s) = (N_1 - M_1) x {min (N_2 - M_2)}
-
-            let m2 = matcher
-                .core_2
-                .keys()
-                .map(|name| name.clone())
-                .collect::<HashSet<String>>();
-
-            for name1 in matcher.g1_nodes.iter() {
-                for name2 in matcher.g2_nodes.difference(&m2) {
-                    pairs.push((name1.clone(), name2.clone()));
-                }
-            }
-        }
-    }
-    pairs
 }
 
 pub fn syntactic_feasibility(
