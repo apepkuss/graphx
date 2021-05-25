@@ -87,6 +87,17 @@ pub struct DiGraphMatcher<'a> {
     pub g2_node_order: HashMap<String, usize>,
 
     // Declare that we will be searching for a graph-graph isomorphism.
+    // test='graph'
+    // Indicates that the graph matcher is looking for a graph-graph
+    // isomorphism.
+
+    // test='subgraph'
+    // Indicates that the graph matcher is looking for a subgraph-graph
+    // isomorphism such that a subgraph of G1 is isomorphic to G2.
+
+    // test='mono'
+    // Indicates that the graph matcher is looking for a subgraph-graph
+    // monomorphism such that a subgraph of G1 is monomorphic to G2.
     pub test: String,
 
     // core_1[n] contains the index of the node paired with n, which is m, provided n is in the mapping.
@@ -147,7 +158,68 @@ impl<'a> DiGraphMatcher<'a> {
         }
     }
 
-    pub fn candidate_paris_iter(&self) -> Vec<(String, String)> {
+    pub fn subgraph_isomorphisms_iter(&mut self, mapping: &mut Vec<Vec<(String, String)>>) {
+        self.test = String::from("subgraph");
+        let mut state = DiGMState::new(self);
+        self.try_match(&mut state, mapping);
+    }
+
+    pub fn try_match(&mut self, state: &mut DiGMState, mapping: &mut Vec<Vec<(String, String)>>) {
+        if self.core_1.len() == self.g2.node_count() {
+            // Save the final mapping, otherwise garbage collection deletes it.
+            let res: Vec<(String, String)> = self
+                .core_1
+                .iter()
+                .map(|(g1_node_name, g2_node_name)| (g1_node_name.clone(), g2_node_name.clone()))
+                .collect();
+            mapping.push(res);
+        } else {
+            for (g1_node, g2_node) in self.candidate_paris_iter() {
+                if self.syntactic_feasibility(g1_node.clone(), g2_node.clone()) {
+                    if self.semantic_feasibility(g1_node.clone(), g2_node.clone()) {
+                        state.initilize(self, g1_node.clone(), g2_node.clone());
+                        self.try_match(state, mapping);
+                        state.restore(self);
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn syntactic_feasibility(&self, g1_node_name: String, g2_node_name: String) -> bool {
+        let g1_node = self.g1.nodes.get(g1_node_name.as_str()).unwrap();
+        let g2_node = self.g2.nodes.get(g2_node_name.as_str()).unwrap();
+
+        // R_self for checking self loops
+        // The number of selfloops for G1_node must equal the number of
+        // self-loops for G2_node. Without this check, we would fail on R_pred
+        // at the next recursion level. This should prune the tree even further.
+        if !self.r_self(&g1_node, &g2_node) {
+            return false;
+        }
+
+        // R_pred and R_succ for checking the consistency of the partial solution
+        if !self.r_pred(g1_node, g2_node) || !self.r_succ(g1_node, g2_node) {
+            return false;
+        }
+
+        // R_in, R_out and R_new for pruning the search tree
+        // R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
+        if !self.r_in(g1_node, g2_node)
+            || self.r_out(g1_node, g2_node)
+            || self.r_new(g1_node, g2_node)
+        {
+            return false;
+        }
+
+        true
+    }
+
+    pub fn semantic_feasibility(&self, _g1_node: String, _g2_node: String) -> bool {
+        todo!()
+    }
+
+    fn candidate_paris_iter(&self) -> Vec<(String, String)> {
         // All computations are done using the current state!
 
         let mut pairs = Vec::new();
@@ -247,139 +319,284 @@ impl<'a> DiGraphMatcher<'a> {
         pairs
     }
 
-    pub fn push_state(&mut self, _state: &mut DiGMState, g1_node: String, g2_node: String) {
-        // state.push(g1_node.clone(), g2_node.clone());
-
-        self.core_1.insert(g1_node.clone(), g2_node.clone());
-        self.core_2.insert(g2_node.clone(), g1_node.clone());
-
-        self.depth = self.core_1.len();
-
-        // First we add the new nodes to Tin_1, Tin_2, Tout_1 and Tout_2
-        if !self.in_1.contains_key(g1_node.as_str()) {
-            self.in_1.insert(g1_node.clone(), self.depth);
+    /// R_self for checking self loops
+    /// The number of selfloops for G1_node must equal the number of
+    /// self-loops for G2_node. Without this check, we would fail on R_pred
+    /// at the next recursion level. This should prune the tree even further.
+    fn r_self(&self, g1_node: &Node, g2_node: &Node) -> bool {
+        if self
+            .g1
+            .edge_count(g1_node.name.as_str(), g1_node.name.as_str())
+            != self
+                .g2
+                .edge_count(g2_node.name.as_str(), g2_node.name.as_str())
+        {
+            return false;
         }
-        if !self.out_1.contains_key(g1_node.as_str()) {
-            self.out_1.insert(g1_node.clone(), self.depth);
-        }
-        if !self.in_2.contains_key(g2_node.as_str()) {
-            self.in_2.insert(g2_node.clone(), self.depth);
-        }
-        if !self.out_2.contains_key(g2_node.as_str()) {
-            self.out_2.insert(g2_node.clone(), self.depth);
-        }
-
-        // Now we add every other node...
-
-        // Updates for Tin_1
-        let mut new_nodes = HashSet::new();
-        for name in self.core_1.keys() {
-            for predecessor in self.g1.predecessors(name) {
-                if !self.core_1.contains_key(predecessor.name.as_str()) {
-                    new_nodes.insert(predecessor);
-                }
-            }
-        }
-        for node in new_nodes {
-            if !self.in_1.contains_key(node.name.as_str()) {
-                self.in_1.insert(node.name.clone(), self.depth);
-            }
-        }
-
-        // Updates for Tin_2
-        let mut new_nodes = HashSet::new();
-        for name in self.core_2.keys() {
-            for predecessor in self.g2.predecessors(name) {
-                if !self.core_2.contains_key(predecessor.name.as_str()) {
-                    new_nodes.insert(predecessor);
-                }
-            }
-        }
-        for node in new_nodes {
-            if !self.in_2.contains_key(node.name.as_str()) {
-                self.in_2.insert(node.name.clone(), self.depth);
-            }
-        }
-
-        // Updates for Tout_1
-        let mut new_nodes = HashSet::new();
-        for name in self.core_1.keys() {
-            for successor in self.g1.successors(name) {
-                if !self.core_1.contains_key(successor.name.as_str()) {
-                    new_nodes.insert(successor);
-                }
-            }
-        }
-        for node in new_nodes {
-            if !self.out_1.contains_key(node.name.as_str()) {
-                self.out_1.insert(node.name.clone(), self.depth);
-            }
-        }
-
-        // Updates for Tout_2
-        let mut new_nodes = HashSet::new();
-        for name in self.core_2.keys() {
-            for successor in self.g2.successors(name) {
-                if !self.core_2.contains_key(successor.name.as_str()) {
-                    new_nodes.insert(successor);
-                }
-            }
-        }
-        for node in new_nodes {
-            if !self.out_2.contains_key(node.name.as_str()) {
-                self.out_2.insert(node.name.clone(), self.depth);
-            }
-        }
+        true
     }
 
-    pub fn pop_state(&mut self, g1_node: String, g2_node: String) {
-        // First we remove the node that was added from the core vectors.
-        // Watch out! G1_node == 0 should evaluate to True.
-        self.core_1.remove_entry(g1_node.as_str());
-        self.core_2.remove_entry(g2_node.as_str());
+    /// R_pred and R_succ for checking the consistency of the partial solution
+    fn r_pred(&self, g1_node: &Node, g2_node: &Node) -> bool {
+        // For each predecessor n' of n in the partial mapping, the
+        // corresponding node m' is a predecessor of m, and vice versa. Also,
+        // the number of edges must be equal
 
-        // Now we revert the other four vectors.
-        // Thus, we delete all entries which have this depth level.
-
-        let keys: Vec<_> = self
-            .in_1
-            .iter()
-            .filter(|&(_, depth)| *depth == self.depth)
-            .map(|(name, _)| name.clone())
-            .collect();
-        for key in keys {
-            self.in_1.remove(key.as_str());
+        for predecessor in self.g1.predecessors(g1_node.name.as_str()) {
+            if self.core_1.contains_key(predecessor.name.as_str()) {
+                if self
+                    .g2
+                    .predecessors(g2_node.name.as_str())
+                    .iter()
+                    .all(|&x| x.name != *self.core_1.get(predecessor.name.as_str()).unwrap())
+                {
+                    return false;
+                }
+            } else if self
+                .g1
+                .edge_count(predecessor.name.as_str(), g1_node.name.as_str())
+                != self.g2.edge_count(
+                    self.core_1.get(predecessor.name.as_str()).unwrap(),
+                    g2_node.name.as_str(),
+                )
+            {
+                return false;
+            }
         }
 
-        let keys: Vec<_> = self
-            .in_2
-            .iter()
-            .filter(|&(_, depth)| *depth == self.depth)
-            .map(|(name, _)| name.clone())
-            .collect();
-        for key in keys {
-            self.in_2.remove(key.as_str());
+        for predecessor in self.g2.predecessors(g2_node.name.as_str()) {
+            if self.core_2.contains_key(predecessor.name.as_str()) {
+                if self
+                    .g1
+                    .predecessors(g1_node.name.as_str())
+                    .iter()
+                    .all(|&x| x.name != *self.core_2.get(predecessor.name.as_str()).unwrap())
+                {
+                    return false;
+                } else if self
+                    .g2
+                    .edge_count(predecessor.name.as_str(), g2_node.name.as_str())
+                    != self.g2.edge_count(
+                        self.core_2.get(predecessor.name.as_str()).unwrap(),
+                        g1_node.name.as_str(),
+                    )
+                {
+                    return false;
+                }
+            }
         }
 
-        let keys: Vec<_> = self
-            .out_1
-            .iter()
-            .filter(|&(_, depth)| *depth == self.depth)
-            .map(|(name, _)| name.clone())
-            .collect();
-        for key in keys {
-            self.out_1.remove(key.as_str());
+        true
+    }
+
+    /// R_pred and R_succ for checking the consistency of the partial solution
+    fn r_succ(&self, g1_node: &Node, g2_node: &Node) -> bool {
+        // For each successor n' of n in the partial mapping, the corresponding
+        // node m' is a successor of m, and vice versa. Also, the number of
+        // edges must be equal.
+
+        for successor in self.g1.successors(g1_node.name.as_str()) {
+            if self.core_1.contains_key(successor.name.as_str()) {
+                if self
+                    .g2
+                    .successors(g2_node.name.as_str())
+                    .iter()
+                    .all(|&x| x.name != *self.core_1.get(successor.name.as_str()).unwrap())
+                {
+                    return false;
+                } else if self
+                    .g1
+                    .edge_count(g1_node.name.as_str(), successor.name.as_str())
+                    != self.g2.edge_count(
+                        g2_node.name.as_str(),
+                        self.core_1.get(successor.name.as_str()).unwrap(),
+                    )
+                {
+                    return false;
+                }
+            }
         }
 
-        let keys: Vec<_> = self
-            .out_2
-            .iter()
-            .filter(|&(_, depth)| *depth == self.depth)
-            .map(|(name, _)| name.clone())
-            .collect();
-        for key in keys {
-            self.out_2.remove(key.as_str());
+        for successor in self.g2.successors(g2_node.name.as_str()) {
+            if self.core_2.contains_key(successor.name.as_str()) {
+                if self
+                    .g1
+                    .successors(g1_node.name.as_str())
+                    .iter()
+                    .all(|&x| x.name != *self.core_2.get(successor.name.as_str()).unwrap())
+                {
+                    return false;
+                } else if self
+                    .g2
+                    .edge_count(g2_node.name.as_str(), successor.name.as_str())
+                    != self.g1.edge_count(
+                        g1_node.name.as_str(),
+                        self.core_2.get(successor.name.as_str()).unwrap(),
+                    )
+                {
+                    return false;
+                }
+            }
         }
+
+        true
+    }
+
+    /// R_in, R_out and R_new for pruning the search tree
+    /// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
+    fn r_in(&self, g1_node: &Node, g2_node: &Node) -> bool {
+        // The number of predecessors of n that are in Tin_1 is equal to the
+        // number of predecessors of m that are in Tin_2.
+
+        let mut num1 = 0;
+        for predecessor in self.g1.predecessors(g1_node.name.as_str()) {
+            if self.in_1.contains_key(predecessor.name.as_str())
+                && !self.core_1.contains_key(predecessor.name.as_str())
+            {
+                num1 += 1;
+            }
+        }
+        let mut num2 = 0;
+        for predecessor in self.g2.predecessors(g2_node.name.as_str()) {
+            if self.in_2.contains_key(predecessor.name.as_str())
+                && !self.core_2.contains_key(predecessor.name.as_str())
+            {
+                num2 += 1;
+            }
+        }
+        if !(num1 >= num2) {
+            return false;
+        }
+
+        // The number of successors of n that are in Tin_1 is equal to the
+        // number of successors of m that are in Tin_2.
+        let mut num1 = 0;
+        for successor in self.g1.successors(g1_node.name.as_str()) {
+            if self.in_1.contains_key(successor.name.as_str())
+                && !self.core_1.contains_key(successor.name.as_str())
+            {
+                num1 += 1;
+            }
+        }
+        let mut num2 = 0;
+        for successor in self.g2.successors(g2_node.name.as_str()) {
+            if self.in_2.contains_key(successor.name.as_str())
+                && !self.core_2.contains_key(successor.name.as_str())
+            {
+                num2 += 1;
+            }
+        }
+        if !(num1 >= num2) {
+            return false;
+        }
+
+        true
+    }
+
+    /// R_in, R_out and R_new for pruning the search tree
+    /// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
+    fn r_out(&self, g1_node: &Node, g2_node: &Node) -> bool {
+        // The number of predecessors of n that are in Tout_1 is equal to the
+        // number of predecessors of m that are in Tout_2.
+
+        let mut num1 = 0;
+        for predecessor in self.g1.predecessors(g1_node.name.as_str()) {
+            if self.out_1.contains_key(predecessor.name.as_str())
+                && !self.core_1.contains_key(predecessor.name.as_str())
+            {
+                num1 += 1;
+            }
+        }
+        let mut num2 = 0;
+        for predecessor in self.g2.predecessors(g2_node.name.as_str()) {
+            if self.out_2.contains_key(predecessor.name.as_str())
+                && !self.core_2.contains_key(predecessor.name.as_str())
+            {
+                num2 += 1;
+            }
+        }
+        if !(num1 >= num2) {
+            return false;
+        }
+
+        // The number of successors of n that are in Tout_1 is equal to the
+        // number of successors of m that are in Tout_2.
+
+        let mut num1 = 0;
+        for successor in self.g1.successors(g1_node.name.as_str()) {
+            if self.out_1.contains_key(successor.name.as_str())
+                && !self.core_1.contains_key(successor.name.as_str())
+            {
+                num1 += 1;
+            }
+        }
+        let mut num2 = 0;
+        for successor in self.g2.successors(g2_node.name.as_str()) {
+            if self.out_2.contains_key(successor.name.as_str())
+                && !self.core_2.contains_key(successor.name.as_str())
+            {
+                num2 += 1;
+            }
+        }
+        if !(num1 >= num2) {
+            return false;
+        }
+
+        true
+    }
+
+    /// R_in, R_out and R_new for pruning the search tree
+    /// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
+    fn r_new(&self, g1_node: &Node, g2_node: &Node) -> bool {
+        // The number of predecessors of n that are neither in the core_1 nor
+        // Tin_1 nor Tout_1 is equal to the number of predecessors of m
+        // that are neither in core_2 nor Tin_2 nor Tout_2.
+
+        let mut num1 = 0;
+        for predecessor in self.g1.predecessors(g1_node.name.as_str()) {
+            if self.in_1.contains_key(predecessor.name.as_str())
+                && !self.out_1.contains_key(predecessor.name.as_str())
+            {
+                num1 += 1;
+            }
+        }
+        let mut num2 = 0;
+        for predecessor in self.g2.predecessors(g2_node.name.as_str()) {
+            if self.in_2.contains_key(predecessor.name.as_str())
+                && !self.out_2.contains_key(predecessor.name.as_str())
+            {
+                num2 += 1;
+            }
+        }
+        if !(num1 >= num2) {
+            return false;
+        }
+
+        // The number of successors of n that are neither in the core_1 nor
+        // Tin_1 nor Tout_1 is equal to the number of successors of m
+        // that are neither in core_2 nor Tin_2 nor Tout_2.
+
+        let mut num1 = 0;
+        for successor in self.g1.successors(g1_node.name.as_str()) {
+            if self.in_1.contains_key(successor.name.as_str())
+                && !self.out_1.contains_key(successor.name.as_str())
+            {
+                num1 += 1;
+            }
+        }
+        let mut num2 = 0;
+        for successor in self.g2.successors(g2_node.name.as_str()) {
+            if self.in_2.contains_key(successor.name.as_str())
+                && !self.out_2.contains_key(successor.name.as_str())
+            {
+                num2 += 2;
+            }
+        }
+        if !(num1 >= num2) {
+            return false;
+        }
+
+        true
     }
 }
 
@@ -524,359 +741,10 @@ impl DiGMState {
     }
 }
 
-pub fn subgraph_isomorphisms_iter<'a>(g1: &'a DiGraph, g2: &'a DiGraph) {
-    let mut matcher = DiGraphMatcher::new(&g1, &g2);
-    matcher.test = String::from("subgraph");
-    let mut state = DiGMState::new(&matcher);
-    let mut mapping = Vec::new();
-    try_match(&mut matcher, &mut state, &mut mapping);
-}
-
-pub fn try_match(
-    mut matcher: &mut DiGraphMatcher,
-    mut state: &mut DiGMState,
-    mut mapping: &mut Vec<Vec<(String, String)>>,
-) {
-    if matcher.core_1.len() == matcher.g2.node_count() {
-        // Save the final mapping, otherwise garbage collection deletes it.
-        let res: Vec<(String, String)> = matcher
-            .core_1
-            .iter()
-            .map(|(g1_node_name, g2_node_name)| (g1_node_name.clone(), g2_node_name.clone()))
-            .collect();
-        mapping.push(res);
-    } else {
-        for (g1_node, g2_node) in matcher.candidate_paris_iter() {
-            if syntactic_feasibility(&matcher, g1_node.clone(), g2_node.clone()) {
-                if semantic_feasibility(g1_node.clone(), g2_node.clone()) {
-                    state.initilize(&mut matcher, g1_node.clone(), g2_node.clone());
-                    try_match(&mut matcher, &mut state, &mut mapping);
-                    state.restore(&mut matcher);
-                }
-            }
-        }
-    }
-}
-
-pub fn syntactic_feasibility(
-    matcher: &DiGraphMatcher,
-    g1_node_name: String,
-    g2_node_name: String,
-) -> bool {
-    let g1_node = matcher.g1.nodes.get(g1_node_name.as_str()).unwrap();
-    let g2_node = matcher.g2.nodes.get(g2_node_name.as_str()).unwrap();
-
-    // R_self for checking self loops
-    // The number of selfloops for G1_node must equal the number of
-    // self-loops for G2_node. Without this check, we would fail on R_pred
-    // at the next recursion level. This should prune the tree even further.
-    if !r_self(&matcher, &g1_node, &g2_node) {
-        return false;
-    }
-
-    // R_pred and R_succ for checking the consistency of the partial solution
-    if !r_pred(matcher, g1_node, g2_node) || !r_succ(matcher, g1_node, g2_node) {
-        return false;
-    }
-
-    // R_in, R_out and R_new for pruning the search tree
-    // R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
-    if !r_in(matcher, g1_node, g2_node)
-        || r_out(matcher, g1_node, g2_node)
-        || r_new(matcher, g1_node, g2_node)
-    {
-        return false;
-    }
-
-    true
-}
-
-/// R_self for checking self loops
-/// The number of selfloops for G1_node must equal the number of
-/// self-loops for G2_node. Without this check, we would fail on R_pred
-/// at the next recursion level. This should prune the tree even further.
-pub fn r_self(matcher: &DiGraphMatcher, g1_node: &Node, g2_node: &Node) -> bool {
-    if matcher
-        .g1
-        .edge_count(g1_node.name.as_str(), g1_node.name.as_str())
-        != matcher
-            .g2
-            .edge_count(g2_node.name.as_str(), g2_node.name.as_str())
-    {
-        return false;
-    }
-    true
-}
-
-/// R_pred and R_succ for checking the consistency of the partial solution
-pub fn r_pred(matcher: &DiGraphMatcher, g1_node: &Node, g2_node: &Node) -> bool {
-    // For each predecessor n' of n in the partial mapping, the
-    // corresponding node m' is a predecessor of m, and vice versa. Also,
-    // the number of edges must be equal
-
-    for predecessor in matcher.g1.predecessors(g1_node.name.as_str()) {
-        if matcher.core_1.contains_key(predecessor.name.as_str()) {
-            if matcher
-                .g2
-                .predecessors(g2_node.name.as_str())
-                .iter()
-                .all(|&x| x.name != *matcher.core_1.get(predecessor.name.as_str()).unwrap())
-            {
-                return false;
-            }
-        } else if matcher
-            .g1
-            .edge_count(predecessor.name.as_str(), g1_node.name.as_str())
-            != matcher.g2.edge_count(
-                matcher.core_1.get(predecessor.name.as_str()).unwrap(),
-                g2_node.name.as_str(),
-            )
-        {
-            return false;
-        }
-    }
-
-    for predecessor in matcher.g2.predecessors(g2_node.name.as_str()) {
-        if matcher.core_2.contains_key(predecessor.name.as_str()) {
-            if matcher
-                .g1
-                .predecessors(g1_node.name.as_str())
-                .iter()
-                .all(|&x| x.name != *matcher.core_2.get(predecessor.name.as_str()).unwrap())
-            {
-                return false;
-            } else if matcher
-                .g2
-                .edge_count(predecessor.name.as_str(), g2_node.name.as_str())
-                != matcher.g2.edge_count(
-                    matcher.core_2.get(predecessor.name.as_str()).unwrap(),
-                    g1_node.name.as_str(),
-                )
-            {
-                return false;
-            }
-        }
-    }
-
-    true
-}
-
-/// R_pred and R_succ for checking the consistency of the partial solution
-pub fn r_succ(matcher: &DiGraphMatcher, g1_node: &Node, g2_node: &Node) -> bool {
-    // For each successor n' of n in the partial mapping, the corresponding
-    // node m' is a successor of m, and vice versa. Also, the number of
-    // edges must be equal.
-
-    for successor in matcher.g1.successors(g1_node.name.as_str()) {
-        if matcher.core_1.contains_key(successor.name.as_str()) {
-            if matcher
-                .g2
-                .successors(g2_node.name.as_str())
-                .iter()
-                .all(|&x| x.name != *matcher.core_1.get(successor.name.as_str()).unwrap())
-            {
-                return false;
-            } else if matcher
-                .g1
-                .edge_count(g1_node.name.as_str(), successor.name.as_str())
-                != matcher.g2.edge_count(
-                    g2_node.name.as_str(),
-                    matcher.core_1.get(successor.name.as_str()).unwrap(),
-                )
-            {
-                return false;
-            }
-        }
-    }
-
-    for successor in matcher.g2.successors(g2_node.name.as_str()) {
-        if matcher.core_2.contains_key(successor.name.as_str()) {
-            if matcher
-                .g1
-                .successors(g1_node.name.as_str())
-                .iter()
-                .all(|&x| x.name != *matcher.core_2.get(successor.name.as_str()).unwrap())
-            {
-                return false;
-            } else if matcher
-                .g2
-                .edge_count(g2_node.name.as_str(), successor.name.as_str())
-                != matcher.g1.edge_count(
-                    g1_node.name.as_str(),
-                    matcher.core_2.get(successor.name.as_str()).unwrap(),
-                )
-            {
-                return false;
-            }
-        }
-    }
-
-    true
-}
-
-/// R_in, R_out and R_new for pruning the search tree
-/// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
-pub fn r_in(matcher: &DiGraphMatcher, g1_node: &Node, g2_node: &Node) -> bool {
-    // The number of predecessors of n that are in Tin_1 is equal to the
-    // number of predecessors of m that are in Tin_2.
-
-    let mut num1 = 0;
-    for predecessor in matcher.g1.predecessors(g1_node.name.as_str()) {
-        if matcher.in_1.contains_key(predecessor.name.as_str())
-            && !matcher.core_1.contains_key(predecessor.name.as_str())
-        {
-            num1 += 1;
-        }
-    }
-    let mut num2 = 0;
-    for predecessor in matcher.g2.predecessors(g2_node.name.as_str()) {
-        if matcher.in_2.contains_key(predecessor.name.as_str())
-            && !matcher.core_2.contains_key(predecessor.name.as_str())
-        {
-            num2 += 1;
-        }
-    }
-    if !(num1 >= num2) {
-        return false;
-    }
-
-    // The number of successors of n that are in Tin_1 is equal to the
-    // number of successors of m that are in Tin_2.
-    let mut num1 = 0;
-    for successor in matcher.g1.successors(g1_node.name.as_str()) {
-        if matcher.in_1.contains_key(successor.name.as_str())
-            && !matcher.core_1.contains_key(successor.name.as_str())
-        {
-            num1 += 1;
-        }
-    }
-    let mut num2 = 0;
-    for successor in matcher.g2.successors(g2_node.name.as_str()) {
-        if matcher.in_2.contains_key(successor.name.as_str())
-            && !matcher.core_2.contains_key(successor.name.as_str())
-        {
-            num2 += 1;
-        }
-    }
-    if !(num1 >= num2) {
-        return false;
-    }
-
-    true
-}
-
-/// R_in, R_out and R_new for pruning the search tree
-/// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
-pub fn r_out(matcher: &DiGraphMatcher, g1_node: &Node, g2_node: &Node) -> bool {
-    // The number of predecessors of n that are in Tout_1 is equal to the
-    // number of predecessors of m that are in Tout_2.
-
-    let mut num1 = 0;
-    for predecessor in matcher.g1.predecessors(g1_node.name.as_str()) {
-        if matcher.out_1.contains_key(predecessor.name.as_str())
-            && !matcher.core_1.contains_key(predecessor.name.as_str())
-        {
-            num1 += 1;
-        }
-    }
-    let mut num2 = 0;
-    for predecessor in matcher.g2.predecessors(g2_node.name.as_str()) {
-        if matcher.out_2.contains_key(predecessor.name.as_str())
-            && !matcher.core_2.contains_key(predecessor.name.as_str())
-        {
-            num2 += 1;
-        }
-    }
-    if !(num1 >= num2) {
-        return false;
-    }
-
-    // The number of successors of n that are in Tout_1 is equal to the
-    // number of successors of m that are in Tout_2.
-
-    let mut num1 = 0;
-    for successor in matcher.g1.successors(g1_node.name.as_str()) {
-        if matcher.out_1.contains_key(successor.name.as_str())
-            && !matcher.core_1.contains_key(successor.name.as_str())
-        {
-            num1 += 1;
-        }
-    }
-    let mut num2 = 0;
-    for successor in matcher.g2.successors(g2_node.name.as_str()) {
-        if matcher.out_2.contains_key(successor.name.as_str())
-            && !matcher.core_2.contains_key(successor.name.as_str())
-        {
-            num2 += 1;
-        }
-    }
-    if !(num1 >= num2) {
-        return false;
-    }
-
-    true
-}
-
-/// R_in, R_out and R_new for pruning the search tree
-/// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
-pub fn r_new(matcher: &DiGraphMatcher, g1_node: &Node, g2_node: &Node) -> bool {
-    // The number of predecessors of n that are neither in the core_1 nor
-    // Tin_1 nor Tout_1 is equal to the number of predecessors of m
-    // that are neither in core_2 nor Tin_2 nor Tout_2.
-
-    let mut num1 = 0;
-    for predecessor in matcher.g1.predecessors(g1_node.name.as_str()) {
-        if matcher.in_1.contains_key(predecessor.name.as_str())
-            && !matcher.out_1.contains_key(predecessor.name.as_str())
-        {
-            num1 += 1;
-        }
-    }
-    let mut num2 = 0;
-    for predecessor in matcher.g2.predecessors(g2_node.name.as_str()) {
-        if matcher.in_2.contains_key(predecessor.name.as_str())
-            && !matcher.out_2.contains_key(predecessor.name.as_str())
-        {
-            num2 += 1;
-        }
-    }
-    if !(num1 >= num2) {
-        return false;
-    }
-
-    // The number of successors of n that are neither in the core_1 nor
-    // Tin_1 nor Tout_1 is equal to the number of successors of m
-    // that are neither in core_2 nor Tin_2 nor Tout_2.
-
-    let mut num1 = 0;
-    for successor in matcher.g1.successors(g1_node.name.as_str()) {
-        if matcher.in_1.contains_key(successor.name.as_str())
-            && !matcher.out_1.contains_key(successor.name.as_str())
-        {
-            num1 += 1;
-        }
-    }
-    let mut num2 = 0;
-    for successor in matcher.g2.successors(g2_node.name.as_str()) {
-        if matcher.in_2.contains_key(successor.name.as_str())
-            && !matcher.out_2.contains_key(successor.name.as_str())
-        {
-            num2 += 2;
-        }
-    }
-    if !(num1 >= num2) {
-        return false;
-    }
-
-    true
-}
-
-pub fn semantic_feasibility(_g1_node: String, _g2_node: String) -> bool {
-    todo!()
-}
-
 fn main() {
     let g1 = DiGraph::new();
     let g2 = DiGraph::new();
-    subgraph_isomorphisms_iter(&g1, &g2);
+    let mut matcher = DiGraphMatcher::new(&g1, &g2);
+    let mut mapping: Vec<Vec<(String, String)>> = Vec::new();
+    matcher.subgraph_isomorphisms_iter(&mut mapping);
 }
