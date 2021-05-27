@@ -22,8 +22,8 @@ impl DiGraph {
             let name = from.unwrap();
             if !self.contains_node(name) {
                 self.nodes
-                .entry(name.to_string())
-                .or_insert(Node::new(name));
+                    .entry(name.to_string())
+                    .or_insert(Node::new(name, None));
             }
         }
 
@@ -32,8 +32,8 @@ impl DiGraph {
             let name = to.unwrap();
             if !self.contains_node(name) {
                 self.nodes
-                .entry(name.to_string())
-                .or_insert(Node::new(name));
+                    .entry(name.to_string())
+                    .or_insert(Node::new(name, None));
             }
         }
 
@@ -96,19 +96,28 @@ impl DiGraph {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub struct Node {
     pub name: String,
     pub predecessors: HashSet<String>,
     pub successors: HashSet<String>,
+    weight: Option<String>,
 }
 impl Node {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str, weight: Option<String>) -> Self {
         Node {
             name: name.to_string(),
             predecessors: HashSet::new(),
             successors: HashSet::new(),
+            weight: weight,
         }
+    }
+
+    pub fn get_weight(&self) -> Option<String> {
+        if self.weight.is_some() {
+            return self.weight.clone();
+        }
+        None
     }
 }
 impl Hash for Node {
@@ -232,10 +241,11 @@ impl<'a> DiGraphMatcher<'a> {
                 println!("g1_node: {:?}", g1_node.as_str());
                 println!("g2_node: {:?}", g2_node.as_str());
 
-                if self.syntactic_feasibility(g1_node.clone(), g2_node.clone()) {
-                    if self.semantic_feasibility(g1_node.clone(), g2_node.clone()) {
+                if self.semantic_feasibility(g1_node.clone(), g2_node.clone()) {
+                    if self.syntactic_feasibility(g1_node.clone(), g2_node.clone()) {
                         // state.initilize(self, g1_node.clone(), g2_node.clone());
-                        let mut newstate = DiGMState::create(self, Some(g1_node.clone()), Some(g2_node.clone()));
+                        let mut newstate =
+                            DiGMState::create(self, Some(g1_node.clone()), Some(g2_node.clone()));
 
                         // ! debug
                         println!("\nafter init state, core_1: {:?}", self.core_1);
@@ -275,7 +285,7 @@ impl<'a> DiGraphMatcher<'a> {
         }
 
         // ! debug
-        println!("\n======== try_match begin ========\n");
+        println!("\n======== try_match end ========\n");
     }
 
     pub fn syntactic_feasibility(&self, g1_node_name: String, g2_node_name: String) -> bool {
@@ -322,7 +332,30 @@ impl<'a> DiGraphMatcher<'a> {
         true
     }
 
-    pub fn semantic_feasibility(&self, _g1_node: String, _g2_node: String) -> bool {
+    pub fn semantic_feasibility(&self, g1_node_name: String, g2_node_name: String) -> bool {
+        // check the weights of g1_node and g2_node
+        let g1_node = self.g1.get_node(g1_node_name.as_str());
+        let g2_node = self.g2.get_node(g2_node_name.as_str());
+
+        if g1_node.is_some() && g2_node.is_some() {
+            let node1 = g1_node.unwrap();
+            let weight1 = node1.get_weight();
+            let node2 = g2_node.unwrap();
+            let weight2 = node2.get_weight();
+
+            if weight1.is_some() && weight2.is_some() {
+                let value1 = weight1.unwrap();
+                let value2 = weight2.unwrap();
+                if value1 != value2 {
+                    return false;
+                }
+            } else if weight1.is_some() || weight2.is_some() {
+                return false;
+            }
+        } else if g1_node.is_some() || g2_node.is_some() {
+            return false;
+        }
+
         true
     }
 
@@ -1047,36 +1080,99 @@ impl DiGMState {
 }
 
 fn main() {
-    let mut g1 = DiGraph::new();
-    g1.add_edge(Some("A"), Some("B"));
-    g1.add_edge(Some("B"), Some("C"));
-    // println!("g1: {:?}", g1);
-    // assert!(g1.node_count() == 3);
-    // println!(
-    //     "\nA pred:{:?}, succ:{:?}",
-    //     g1.predecessors("A"),
-    //     g1.successors("A")
-    // );
-    // println!(
-    //     "\nB pred:{:?}, succ:{:?}",
-    //     g1.predecessors("B"),
-    //     g1.successors("B")
-    // );
-    // println!(
-    //     "\nC pred:{:?}, succ:{:?}",
-    //     g1.predecessors("C"),
-    //     g1.successors("C")
-    // );
+    {
+        let mut g1 = DiGraph::new();
+        g1.add_node(Node::new("A", Some("A".to_string())));
+        g1.add_node(Node::new("B", Some("B".to_string())));
+        g1.add_node(Node::new("C", Some("C".to_string())));
+        g1.add_node(Node::new("D", Some("D".to_string())));
+        g1.add_node(Node::new("E", Some("E".to_string())));
+        g1.add_node(Node::new("F", Some("F".to_string())));
+        g1.add_node(Node::new("G", Some("G".to_string())));
+        g1.add_node(Node::new("H", Some("H".to_string())));
+        g1.add_node(Node::new("I", Some("I".to_string())));
+        g1.add_node(Node::new("J", Some("J".to_string())));
+        g1.add_edge(Some("A"), Some("B"));
+        g1.add_edge(Some("B"), Some("C"));
+        g1.add_edge(Some("C"), Some("E"));
+        g1.add_edge(Some("D"), Some("E"));
+        g1.add_edge(Some("E"), Some("F"));
+        g1.add_edge(Some("F"), Some("G"));
+        g1.add_edge(Some("G"), Some("I"));
+        g1.add_edge(Some("H"), Some("I"));
+        g1.add_edge(Some("I"), Some("J"));
 
-    let mut g2 = DiGraph::new();
-    g2.add_edge(Some("Y"), Some("Z"));
-    // assert!(g2.node_count() == 2);
-    // println!("g2: {:?}", g2);
+        let mut g2 = DiGraph::new();
+        g2.add_node(Node::new("1", Some("B".to_string())));
+        g2.add_node(Node::new("2", Some("C".to_string())));
+        g2.add_node(Node::new("3", Some("D".to_string())));
+        g2.add_node(Node::new("4", Some("E".to_string())));
+        g2.add_edge(Some("1"), Some("2"));
+        g2.add_edge(Some("2"), Some("4"));
+        g2.add_edge(Some("3"), Some("4"));
 
-    let mut matcher = DiGraphMatcher::new(&g1, &g2);
-    let mut mapping: Vec<Vec<(String, String)>> = Vec::new();
-    matcher.subgraph_isomorphisms_iter(&mut mapping);
+        let mut matcher = DiGraphMatcher::new(&g1, &g2);
+        let mut mapping = Vec::new();
+        matcher.subgraph_isomorphisms_iter(&mut mapping);
 
-    println!("\nnum of matches: {}", mapping.len());
-    println!("mapping: {:?}", mapping);
+        println!("size of mapping: {}", mapping.len());
+        println!("mapping: {:?}", mapping);
+    }
+
+    {
+        let mut g1 = DiGraph::new();
+        g1.add_edge(Some("A"), Some("B"));
+        g1.add_edge(Some("B"), Some("C"));
+
+        let mut g2 = DiGraph::new();
+        g2.add_node(Node::new("X", None));
+
+        let mut matcher = DiGraphMatcher::new(&g1, &g2);
+        let mut mapping = Vec::new();
+        matcher.subgraph_isomorphisms_iter(&mut mapping);
+
+        println!("size of mapping: {}", mapping.len());
+        println!("mapping: {:?}", mapping);
+    }
+
+    {
+        let mut g1 = DiGraph::new();
+        g1.add_edge(Some("A"), Some("B"));
+        g1.add_edge(Some("B"), Some("C"));
+        g1.add_edge(Some("C"), Some("E"));
+        g1.add_edge(Some("D"), Some("E"));
+        g1.add_edge(Some("E"), Some("F"));
+        g1.add_edge(Some("F"), Some("G"));
+        g1.add_edge(Some("G"), Some("I"));
+        g1.add_edge(Some("H"), Some("I"));
+        g1.add_edge(Some("I"), Some("J"));
+
+        let mut g2 = DiGraph::new();
+        g2.add_edge(Some("1"), Some("2"));
+        g2.add_edge(Some("2"), Some("4"));
+        g2.add_edge(Some("3"), Some("4"));
+
+        let mut matcher = DiGraphMatcher::new(&g1, &g2);
+        let mut mapping = Vec::new();
+        matcher.subgraph_isomorphisms_iter(&mut mapping);
+
+        println!("size of mapping: {}", mapping.len());
+        println!("mapping: {:?}", mapping);
+    }
+
+    {
+        let mut g1 = DiGraph::new();
+        g1.add_edge(Some("A"), Some("B"));
+        g1.add_edge(Some("B"), Some("C"));
+
+        let mut g2 = DiGraph::new();
+        g2.add_edge(Some("Y"), Some("Z"));
+
+        let mut matcher = DiGraphMatcher::new(&g1, &g2);
+        let mut mapping: Vec<Vec<(String, String)>> = Vec::new();
+        matcher.subgraph_isomorphisms_iter(&mut mapping);
+
+        println!("\nnum of matches: {}", mapping.len());
+        println!("mapping: {:?}", mapping);
+    }
 }
