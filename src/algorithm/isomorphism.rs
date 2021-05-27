@@ -101,12 +101,6 @@ impl<'a> DiGraphMatcher<'a> {
     }
 
     pub fn try_match(&mut self, state: &mut DiGMState, mapping: &mut Vec<Vec<(String, String)>>) {
-        // ! debug
-        println!("\n======== try_match begin ========");
-        println!("core_1: {:?}", self.core_1);
-        println!("core_2: {:?}", self.core_2);
-        println!("mapping: {:?}", mapping);
-
         if self.core_1.len() == self.g2.node_count() {
             // Save the final mapping, otherwise garbage collection deletes it.
             let res: Vec<(String, String)> = self
@@ -115,68 +109,20 @@ impl<'a> DiGraphMatcher<'a> {
                 .map(|(g1_node_name, g2_node_name)| (g1_node_name.clone(), g2_node_name.clone()))
                 .collect();
             mapping.push(res);
-
-            // ! debug
-            println!("\nmapping: {:?}", mapping);
         } else {
-            let pairs = self.candidate_paris_iter();
-
-            // ! debug
-            println!("\ncandidate pair: {:?}\n", pairs);
-
-            for (g1_node, g2_node) in pairs {
-                // ! debug
-                println!("\n====== iteration begin ======\n");
-                println!("core_1: {:?}", self.core_1);
-                println!("core_2: {:?}", self.core_2);
-                println!("g1_node: {:?}", g1_node.as_str());
-                println!("g2_node: {:?}", g2_node.as_str());
-
+            for (g1_node, g2_node) in self.candidate_paris_iter() {
                 if self.semantic_feasibility(g1_node.clone(), g2_node.clone()) {
                     if self.syntactic_feasibility(g1_node.clone(), g2_node.clone()) {
                         // state.initilize(self, g1_node.clone(), g2_node.clone());
                         let mut newstate =
                             DiGMState::create(self, Some(g1_node.clone()), Some(g2_node.clone()));
-
-                        // ! debug
-                        println!("\nafter init state, core_1: {:?}", self.core_1);
-                        println!("after init state, core_2: {:?}\n", self.core_2);
-
                         self.try_match(&mut newstate, mapping);
-
-                        // ! debug
-                        println!("\nafter try_match: {:?}\n", mapping);
-
-                        // ! debug
-                        println!("\nafter restore state, core_1: {:?}", self.core_1);
-                        println!("before restore state, core_2: {:?}", self.core_2);
-                        println!("before restore state, in_1: {:?}", self.in_1);
-                        println!("before restore state, in_2: {:?}", self.in_2);
-                        println!("before restore state, out_1: {:?}", self.out_1);
-                        println!("before restore state, out_2: {:?}", self.out_2);
-                        println!("before restore state, depth: {}\n", newstate.depth);
-
                         // state.restore(self);
                         newstate.restore(self);
-
-                        // ! debug
-                        println!("\nafter restore state, core_1: {:?}", self.core_1);
-                        println!("after restore state, core_2: {:?}", self.core_2);
-                        println!("after restore state, in_1: {:?}", self.in_1);
-                        println!("after restore state, in_2: {:?}", self.in_2);
-                        println!("after restore state, out_1: {:?}", self.out_1);
-                        println!("after restore state, out_2: {:?}", self.out_2);
-                        println!("after restore state, depth: {}\n", newstate.depth);
-                        println!("after restore state done!");
                     }
                 }
-
-                println!("====== iteration end ======\n");
             }
         }
-
-        // ! debug
-        println!("\n======== try_match end ========\n");
     }
 
     pub fn syntactic_feasibility(&self, g1_node_name: String, g2_node_name: String) -> bool {
@@ -188,35 +134,29 @@ impl<'a> DiGraphMatcher<'a> {
         // self-loops for G2_node. Without this check, we would fail on R_pred
         // at the next recursion level. This should prune the tree even further.
         if !self.r_self(&g1_node, &g2_node) {
-            println!("*** r_self failed ***");
             return false;
         }
 
         // R_pred and R_succ for checking the consistency of the partial solution
         if !self.r_pred(g1_node, g2_node) {
-            println!("*** r_pred failed ***");
             return false;
         }
 
         if !self.r_succ(g1_node, g2_node) {
-            println!("*** r_succ failed ***");
             return false;
         }
 
         // R_in, R_out and R_new for pruning the search tree
         // R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
         if !self.r_in(g1_node, g2_node) {
-            println!("*** r_in failed ***");
             return false;
         }
 
         if !self.r_out(g1_node, g2_node) {
-            println!("*** r_out failed ***");
             return false;
         }
 
         if !self.r_new(g1_node, g2_node) {
-            println!("*** r_new failed ***");
             return false;
         }
 
@@ -347,9 +287,6 @@ impl<'a> DiGraphMatcher<'a> {
     /// self-loops for G2_node. Without this check, we would fail on R_pred
     /// at the next recursion level. This should prune the tree even further.
     fn r_self(&self, g1_node: &Node, g2_node: &Node) -> bool {
-        // ! debug
-        println!("\n*** r_self ***");
-
         if self
             .g1
             .edge_count(g1_node.name.as_str(), g1_node.name.as_str())
@@ -360,17 +297,11 @@ impl<'a> DiGraphMatcher<'a> {
             return false;
         }
 
-        // ! debug
-        println!("*** r_self done ***\n");
-
         true
     }
 
     /// R_pred and R_succ for checking the consistency of the partial solution
     fn r_pred(&self, g1_node: &Node, g2_node: &Node) -> bool {
-        // ! debug
-        println!("*** r_pred ***");
-
         // For each predecessor n' of n in the partial mapping, the
         // corresponding node m' is a predecessor of m, and vice versa. Also,
         // the number of edges must be equal
@@ -397,9 +328,6 @@ impl<'a> DiGraphMatcher<'a> {
             }
         }
 
-        // ! debug
-        println!("g1.predecessors checked!");
-
         for predecessor in self.g2.predecessors(g2_node.name.as_str()) {
             if self.core_2.contains_key(predecessor.name.as_str()) {
                 if self
@@ -422,18 +350,11 @@ impl<'a> DiGraphMatcher<'a> {
             }
         }
 
-        // ! debug
-        println!("g2.predecessors checked!");
-        println!("*** r_pred done ***\n");
-
         true
     }
 
     /// R_pred and R_succ for checking the consistency of the partial solution
     fn r_succ(&self, g1_node: &Node, g2_node: &Node) -> bool {
-        // ! debug
-        println!("\n*** r_succ ***");
-
         // For each successor n' of n in the partial mapping, the corresponding
         // node m' is a successor of m, and vice versa. Also, the number of
         // edges must be equal.
@@ -460,9 +381,6 @@ impl<'a> DiGraphMatcher<'a> {
             }
         }
 
-        // ! debug
-        println!("g1.sucessors checked!");
-
         for successor in self.g2.successors(g2_node.name.as_str()) {
             if self.core_2.contains_key(successor.name.as_str()) {
                 if self
@@ -485,19 +403,12 @@ impl<'a> DiGraphMatcher<'a> {
             }
         }
 
-        // ! debug
-        println!("g2.sucessors checked!");
-        println!("*** r_succ done ***\n");
-
         true
     }
 
     /// R_in, R_out and R_new for pruning the search tree
     /// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
     fn r_in(&self, g1_node: &Node, g2_node: &Node) -> bool {
-        // ! debug
-        println!("\n*** r_in ***");
-
         // The number of predecessors of n that are in Tin_1 is equal to the
         // number of predecessors of m that are in Tin_2.
 
@@ -529,9 +440,6 @@ impl<'a> DiGraphMatcher<'a> {
             }
         }
 
-        // ! debug
-        println!("predecessors same!");
-
         // The number of successors of n that are in Tin_1 is equal to the
         // number of successors of m that are in Tin_2.
         let mut num1 = 0;
@@ -560,19 +468,12 @@ impl<'a> DiGraphMatcher<'a> {
             }
         }
 
-        // ! debug
-        println!("successors same!");
-        println!("*** r_in done ***\n");
-
         true
     }
 
     /// R_in, R_out and R_new for pruning the search tree
     /// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
     fn r_out(&self, g1_node: &Node, g2_node: &Node) -> bool {
-        // ! debug
-        println!("\n*** r_out ***");
-
         // The number of predecessors of n that are in Tout_1 is equal to the
         // number of predecessors of m that are in Tout_2.
 
@@ -604,9 +505,6 @@ impl<'a> DiGraphMatcher<'a> {
             }
         }
 
-        // ! debug
-        println!("predecessors same!");
-
         // The number of successors of n that are in Tout_1 is equal to the
         // number of successors of m that are in Tout_2.
 
@@ -636,23 +534,12 @@ impl<'a> DiGraphMatcher<'a> {
             }
         }
 
-        // ! debug
-        println!("sucessors same!");
-        println!("*** r_out done ***\n");
-
         true
     }
 
     /// R_in, R_out and R_new for pruning the search tree
     /// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
     fn r_new(&self, g1_node: &Node, g2_node: &Node) -> bool {
-        // ! debug
-        println!("\n*** r_new ***");
-        println!("in_1: {:?}", self.in_1);
-        println!("out_1: {:?}", self.out_1);
-        println!("in_2: {:?}", self.in_2);
-        println!("out_2: {:?}", self.out_2);
-
         // The number of predecessors of n that are neither in the core_1 nor
         // Tin_1 nor Tout_1 is equal to the number of predecessors of m
         // that are neither in core_2 nor Tin_2 nor Tout_2.
@@ -679,14 +566,9 @@ impl<'a> DiGraphMatcher<'a> {
             }
         } else {
             if !(num1 >= num2) {
-                // ! debug
-                println!("num1:{}, num2:{}", num1, num2);
                 return false;
             }
         }
-
-        // ! debug
-        println!("predecessors same!");
 
         // The number of successors of n that are neither in the core_1 nor
         // Tin_1 nor Tout_1 is equal to the number of successors of m
@@ -714,15 +596,9 @@ impl<'a> DiGraphMatcher<'a> {
             }
         } else {
             if !(num1 >= num2) {
-                // ! debug
-                println!("num1:{}, num2:{}", num1, num2);
                 return false;
             }
         }
-
-        // ! debug
-        println!("successors same!");
-        println!("*** r_new done ***\n");
 
         true
     }
@@ -734,84 +610,6 @@ pub struct DiGMState {
     pub depth: usize,
 }
 impl DiGMState {
-    pub fn new(matcher: &DiGraphMatcher) -> Self {
-        DiGMState {
-            g1_node: None,
-            g2_node: None,
-            depth: matcher.core_1.len(),
-        }
-    }
-
-    pub fn initilize(&mut self, matcher: &mut DiGraphMatcher, g1_node: String, g2_node: String) {
-        self.g1_node = Some(g1_node.clone());
-        self.g2_node = Some(g2_node.clone());
-        self.depth = matcher.core_1.len();
-
-        // update matcher
-        matcher.core_1.insert(g1_node.clone(), g2_node.clone());
-        matcher.core_2.insert(g2_node.clone(), g1_node.clone());
-
-        // First we add the new nodes to Tin_1, Tin_2, Tout_1 and Tout_2
-        matcher.in_1.entry(g1_node.clone()).or_insert(self.depth);
-        matcher.out_1.entry(g1_node.clone()).or_insert(self.depth);
-        matcher.in_2.entry(g2_node.clone()).or_insert(self.depth);
-        matcher.out_2.entry(g2_node.clone()).or_insert(self.depth);
-
-        // Now we add every other node...
-
-        // Updates for Tin_1
-        let mut new_nodes = HashSet::new();
-        for name in matcher.core_1.keys() {
-            for predecessor in matcher.g1.predecessors(name) {
-                if !matcher.core_1.contains_key(predecessor.name.as_str()) {
-                    new_nodes.insert(predecessor);
-                }
-            }
-        }
-        for node in new_nodes {
-            matcher.in_1.entry(node.name.clone()).or_insert(self.depth);
-        }
-
-        // Updates for Tin_2
-        let mut new_nodes = HashSet::new();
-        for name in matcher.core_2.keys() {
-            for predecessor in matcher.g2.predecessors(name) {
-                if !matcher.core_2.contains_key(predecessor.name.as_str()) {
-                    new_nodes.insert(predecessor);
-                }
-            }
-        }
-        for node in new_nodes {
-            matcher.in_2.entry(node.name.clone()).or_insert(self.depth);
-        }
-
-        // Updates for Tout_1
-        let mut new_nodes = HashSet::new();
-        for name in matcher.core_1.keys() {
-            for successor in matcher.g1.successors(name) {
-                if !matcher.core_1.contains_key(successor.name.as_str()) {
-                    new_nodes.insert(successor);
-                }
-            }
-        }
-        for node in new_nodes {
-            matcher.out_1.entry(node.name.clone()).or_insert(self.depth);
-        }
-
-        // Updates for Tout_2
-        let mut new_nodes = HashSet::new();
-        for name in matcher.core_2.keys() {
-            for successor in matcher.g2.successors(name) {
-                if !matcher.core_2.contains_key(successor.name.as_str()) {
-                    new_nodes.insert(successor);
-                }
-            }
-        }
-        for node in new_nodes {
-            matcher.out_2.entry(node.name.clone()).or_insert(self.depth);
-        }
-    }
-
     pub fn create(
         matcher: &mut DiGraphMatcher,
         g1_node: Option<String>,
