@@ -18,20 +18,28 @@ impl DiGraph {
 
     pub fn add_edge(&mut self, from: Option<&str>, to: Option<&str>) {
         if from.is_some() {
+            // create a new node
             let name = from.unwrap();
-            self.nodes
+            if !self.contains_node(name) {
+                self.nodes
                 .entry(name.to_string())
                 .or_insert(Node::new(name));
+            }
         }
 
         if to.is_some() {
+            // create a new node
             let name = to.unwrap();
-            self.nodes
+            if !self.contains_node(name) {
+                self.nodes
                 .entry(name.to_string())
                 .or_insert(Node::new(name));
+            }
         }
 
         if from.is_some() && to.is_some() {
+            // update predecessors and successros of new nodes
+
             let source = self.nodes.get_mut(from.unwrap()).unwrap();
             source.successors.insert(to.unwrap().to_string());
 
@@ -53,7 +61,7 @@ impl DiGraph {
 
     pub fn successors(&self, name: &str) -> Vec<&Node> {
         let node = self
-            .node(name)
+            .get_node(name)
             .expect(format!("Not found node with name: {}", name).as_str());
         node.successors
             .iter()
@@ -61,11 +69,11 @@ impl DiGraph {
             .collect()
     }
 
-    pub fn node(&self, name: &str) -> Option<&Node> {
+    pub fn get_node(&self, name: &str) -> Option<&Node> {
         self.nodes.get(name)
     }
 
-    pub fn node_mut(&mut self, name: &str) -> Option<&mut Node> {
+    pub fn get_node_mut(&mut self, name: &str) -> Option<&mut Node> {
         self.nodes.get_mut(name)
     }
 
@@ -81,6 +89,10 @@ impl DiGraph {
             }
         }
         count
+    }
+
+    pub fn contains_node(&self, name: &str) -> bool {
+        self.nodes.contains_key(name)
     }
 }
 
