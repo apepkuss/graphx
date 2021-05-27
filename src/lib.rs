@@ -12,8 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod digraph;
-mod node;
-
-pub use digraph::DiGraph;
-pub use node::Node;
+pub mod graph;
+pub mod algorithm;

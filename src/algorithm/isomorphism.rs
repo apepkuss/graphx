@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::collections::{HashMap, HashSet};
+
+use crate::graph::{DiGraph, Node};
 
 pub struct DiGraphMatcher<'a> {
     pub g1: &'a DiGraph,
