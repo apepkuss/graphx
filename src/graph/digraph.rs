@@ -129,7 +129,7 @@ mod tests {
 
     #[test]
     fn test_json_to_digraph() {
-        let json_str = r#"{"name":null,"nodes":{"B":{"name":"B","predecessors":["A"],"successors":[],"weight":null},"A":{"name":"A","predecessors":[],"successors":["B"],"weight":null}}}"#;
+        let json_str = r#"{"nodes":{"B":{"name":"B","predecessors":["A"],"successors":[]},"A":{"name":"A","predecessors":[],"successors":["B"]}}}"#;
         let actual: DiGraph = serde_json::from_str(json_str).unwrap();
 
         let mut g = DiGraph::new(None);
