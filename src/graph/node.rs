@@ -57,6 +57,14 @@ impl Node {
         self.successors.remove(name);
     }
 
+    pub fn in_degree(&self) -> usize {
+        self.predecessors.len()
+    }
+
+    pub fn out_degree(&self) -> usize {
+        self.successors.len()
+    }
+
     pub fn get_weight(&self) -> Option<String> {
         if self.weight.is_some() {
             return self.weight.clone();

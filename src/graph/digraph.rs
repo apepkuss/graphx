@@ -86,6 +86,24 @@ impl DiGraph {
             .collect()
     }
 
+    pub fn in_degree(&self, name: &str) -> usize {
+        if !self.nodes.contains_key(name) {
+            return 0;
+        }
+
+        let node = self.nodes.get(name).unwrap();
+        node.in_degree()
+    }
+
+    pub fn out_degree(&self, name: &str) -> usize {
+        if !self.nodes.contains_key(name) {
+            return 0;
+        }
+
+        let node = self.nodes.get(name).unwrap();
+        node.out_degree()
+    }
+
     pub fn get_node(&self, name: &str) -> Option<&Node> {
         self.nodes.get(name)
     }
