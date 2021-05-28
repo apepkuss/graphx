@@ -86,22 +86,22 @@ impl DiGraph {
             .collect()
     }
 
-    pub fn in_degree(&self, name: &str) -> usize {
+    pub fn in_degree(&self, name: &str) -> Result<usize, NotFoundNodeError> {
         if !self.nodes.contains_key(name) {
-            return 0;
+            return Err(NotFoundNodeError);
         }
 
         let node = self.nodes.get(name).unwrap();
-        node.in_degree()
+        Ok(node.in_degree())
     }
 
-    pub fn out_degree(&self, name: &str) -> usize {
+    pub fn out_degree(&self, name: &str) -> Result<usize, NotFoundNodeError> {
         if !self.nodes.contains_key(name) {
-            return 0;
+            return Err(NotFoundNodeError);
         }
 
         let node = self.nodes.get(name).unwrap();
-        node.out_degree()
+        Ok(node.out_degree())
     }
 
     pub fn get_node(&self, name: &str) -> Option<&Node> {
@@ -131,6 +131,18 @@ impl DiGraph {
     }
 }
 
+#[derive(Debug)]
+pub struct NotFoundNodeError;
+impl std::fmt::Display for NotFoundNodeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Not found node")
+    }
+}
+impl std::error::Error for NotFoundNodeError {}
+
+
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -140,9 +152,10 @@ mod tests {
         let mut g = DiGraph::new(None);
         g.add_edge(Some("A"), Some("B"));
 
-        let expected = r#"{"name":null,"nodes":{"B":{"name":"B","predecessors":["A"],"successors":[],"weight":null},"A":{"name":"A","predecessors":[],"successors":["B"],"weight":null}}}"#;
+        let expected1 = r#"{"name":null,"nodes":{"B":{"name":"B","predecessors":["A"],"successors":[],"weight":null},"A":{"name":"A","predecessors":[],"successors":["B"],"weight":null}}}"#;
+        let expected2 = r#"{"name":null,"nodes":{"A":{"name":"A","predecessors":[],"successors":["B"],"weight":null},"B":{"name":"B","predecessors":["A"],"successors":[],"weight":null}}}"#;
         let actual = serde_json::to_string(&g).unwrap();
-        assert_eq!(expected, actual);
+        assert!(expected1 == actual || expected2 == actual);
     }
 
     #[test]
