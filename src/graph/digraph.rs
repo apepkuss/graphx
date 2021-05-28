@@ -65,30 +65,46 @@ impl DiGraph {
         }
     }
 
-    pub fn predecessors(&self, name: &str) -> Vec<&Node> {
+    pub fn predecessors(&self, name: &str) -> Result<Vec<&Node>, NotFoundNodeError> {
+        if !self.nodes.contains_key(name) {
+            return Err(NotFoundNodeError {
+                message: format!("Not found node: {}", name),
+            });
+        }
+
         let node = self
             .nodes
             .get(name)
             .expect(format!("Not found node with name: {}", name).as_str());
-        node.predecessors
+        Ok(node
+            .predecessors
             .iter()
             .map(|name| self.nodes.get(name.as_str()).unwrap())
-            .collect()
+            .collect())
     }
 
-    pub fn successors(&self, name: &str) -> Vec<&Node> {
+    pub fn successors(&self, name: &str) -> Result<Vec<&Node>, NotFoundNodeError> {
+        if !self.nodes.contains_key(name) {
+            return Err(NotFoundNodeError {
+                message: format!("Not found node: {}", name),
+            });
+        }
+
         let node = self
             .get_node(name)
             .expect(format!("Not found node with name: {}", name).as_str());
-        node.successors
+        Ok(node
+            .successors
             .iter()
             .map(|name| self.nodes.get(name.as_str()).unwrap())
-            .collect()
+            .collect())
     }
 
     pub fn in_degree(&self, name: &str) -> Result<usize, NotFoundNodeError> {
         if !self.nodes.contains_key(name) {
-            return Err(NotFoundNodeError);
+            return Err(NotFoundNodeError {
+                message: format!("Not found node: {}", name),
+            });
         }
 
         let node = self.nodes.get(name).unwrap();
@@ -97,7 +113,9 @@ impl DiGraph {
 
     pub fn out_degree(&self, name: &str) -> Result<usize, NotFoundNodeError> {
         if !self.nodes.contains_key(name) {
-            return Err(NotFoundNodeError);
+            return Err(NotFoundNodeError {
+                message: format!("Not found node: {}", name),
+            });
         }
 
         let node = self.nodes.get(name).unwrap();
@@ -118,10 +136,16 @@ impl DiGraph {
 
     pub fn edge_count(&self, from: &str, to: &str) -> usize {
         let mut count = 0 as usize;
-        for succ in self.successors(from) {
-            if succ.name == to {
-                count += 1;
+        let result_succ = self.successors(from);
+        match result_succ {
+            Ok(successor_vec) => {
+                for succ in successor_vec {
+                    if succ.name == to {
+                        count += 1;
+                    }
+                }
             }
+            Err(err) => panic!("{}", err.message),
         }
         count
     }
@@ -132,16 +156,15 @@ impl DiGraph {
 }
 
 #[derive(Debug)]
-pub struct NotFoundNodeError;
+pub struct NotFoundNodeError {
+    pub message: String,
+}
 impl std::fmt::Display for NotFoundNodeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Not found node")
     }
 }
 impl std::error::Error for NotFoundNodeError {}
-
-
-
 
 #[cfg(test)]
 mod tests {
