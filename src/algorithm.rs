@@ -13,3 +13,4 @@
 // limitations under the License.
 
 pub mod isomorphism;
+pub mod topsort;

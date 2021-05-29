@@ -14,22 +14,22 @@
 
 use graphx::{
     algorithm::isomorphism as iso,
-    graph::{DiGraph, Graph, Node},
+    graph::{DiGraph, DiNode, Graph},
 };
 
 #[test]
 fn iso_digraph_weight_test() {
     let mut g1 = DiGraph::new(None);
-    g1.add_node(Node::new("A", Some("A".to_string())));
-    g1.add_node(Node::new("B", Some("B".to_string())));
-    g1.add_node(Node::new("C", Some("C".to_string())));
-    g1.add_node(Node::new("D", Some("D".to_string())));
-    g1.add_node(Node::new("E", Some("E".to_string())));
-    g1.add_node(Node::new("F", Some("F".to_string())));
-    g1.add_node(Node::new("G", Some("G".to_string())));
-    g1.add_node(Node::new("H", Some("H".to_string())));
-    g1.add_node(Node::new("I", Some("I".to_string())));
-    g1.add_node(Node::new("J", Some("J".to_string())));
+    g1.add_node(DiNode::new("A", Some("A".to_string())));
+    g1.add_node(DiNode::new("B", Some("B".to_string())));
+    g1.add_node(DiNode::new("C", Some("C".to_string())));
+    g1.add_node(DiNode::new("D", Some("D".to_string())));
+    g1.add_node(DiNode::new("E", Some("E".to_string())));
+    g1.add_node(DiNode::new("F", Some("F".to_string())));
+    g1.add_node(DiNode::new("G", Some("G".to_string())));
+    g1.add_node(DiNode::new("H", Some("H".to_string())));
+    g1.add_node(DiNode::new("I", Some("I".to_string())));
+    g1.add_node(DiNode::new("J", Some("J".to_string())));
     g1.add_edge(Some("A"), Some("B"));
     g1.add_edge(Some("B"), Some("C"));
     g1.add_edge(Some("C"), Some("E"));
@@ -41,10 +41,10 @@ fn iso_digraph_weight_test() {
     g1.add_edge(Some("I"), Some("J"));
 
     let mut g2 = DiGraph::new(None);
-    g2.add_node(Node::new("1", Some("B".to_string())));
-    g2.add_node(Node::new("2", Some("C".to_string())));
-    g2.add_node(Node::new("3", Some("D".to_string())));
-    g2.add_node(Node::new("4", Some("E".to_string())));
+    g2.add_node(DiNode::new("1", Some("B".to_string())));
+    g2.add_node(DiNode::new("2", Some("C".to_string())));
+    g2.add_node(DiNode::new("3", Some("D".to_string())));
+    g2.add_node(DiNode::new("4", Some("E".to_string())));
     g2.add_edge(Some("1"), Some("2"));
     g2.add_edge(Some("2"), Some("4"));
     g2.add_edge(Some("3"), Some("4"));

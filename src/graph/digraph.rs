@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::node::Node;
+use super::node::DiNode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -21,7 +21,7 @@ use super::Graph;
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct DiGraph {
     name: Option<String>,
-    pub nodes: HashMap<String, Node>,
+    pub nodes: HashMap<String, DiNode>,
 }
 impl DiGraph {
     pub fn new(name: Option<String>) -> Self {
@@ -31,7 +31,7 @@ impl DiGraph {
         }
     }
 
-    pub fn predecessors(&self, name: &str) -> Result<Vec<&Node>, NotFoundNodeError> {
+    pub fn predecessors(&self, name: &str) -> Result<Vec<&DiNode>, NotFoundNodeError> {
         if !self.nodes.contains_key(name) {
             return Err(NotFoundNodeError {
                 message: format!("Not found node: {}", name),
@@ -49,7 +49,7 @@ impl DiGraph {
             .collect())
     }
 
-    pub fn successors(&self, name: &str) -> Result<Vec<&Node>, NotFoundNodeError> {
+    pub fn successors(&self, name: &str) -> Result<Vec<&DiNode>, NotFoundNodeError> {
         if !self.nodes.contains_key(name) {
             return Err(NotFoundNodeError {
                 message: format!("Not found node: {}", name),
@@ -88,17 +88,17 @@ impl DiGraph {
         Ok(node.out_degree())
     }
 
-    pub fn get_node(&self, name: &str) -> Option<&Node> {
-        self.nodes.get(name)
-    }
+    // pub fn get_node(&self, name: &str) -> Option<&DiNode> {
+    //     self.nodes.get(name)
+    // }
 
-    pub fn get_node_mut(&mut self, name: &str) -> Option<&mut Node> {
-        self.nodes.get_mut(name)
-    }
+    // pub fn get_node_mut(&mut self, name: &str) -> Option<&mut DiNode> {
+    //     self.nodes.get_mut(name)
+    // }
 
-    pub fn node_count(&self) -> usize {
-        self.nodes.len()
-    }
+    // pub fn node_count(&self) -> usize {
+    //     self.nodes.len()
+    // }
 
     pub fn edge_count(&self, from: &str, to: &str) -> usize {
         let mut count = 0 as usize;
@@ -131,8 +131,8 @@ impl Graph for DiGraph {
             _ => self.name = None,
         }
     }
-    
-    fn add_node(&mut self, node: Node) {
+
+    fn add_node(&mut self, node: DiNode) {
         self.nodes.insert(node.name.clone(), node);
     }
 
@@ -143,7 +143,7 @@ impl Graph for DiGraph {
             if !self.contains_node(name) {
                 self.nodes
                     .entry(name.to_string())
-                    .or_insert(Node::new(name, None));
+                    .or_insert(DiNode::new(name, None));
             }
         }
 
@@ -153,7 +153,7 @@ impl Graph for DiGraph {
             if !self.contains_node(name) {
                 self.nodes
                     .entry(name.to_string())
-                    .or_insert(Node::new(name, None));
+                    .or_insert(DiNode::new(name, None));
             }
         }
 
@@ -167,13 +167,25 @@ impl Graph for DiGraph {
             target.predecessors.insert(from.unwrap().to_string());
         }
     }
-    
+
+    fn get_node(&self, name: &str) -> Option<&DiNode> {
+        self.nodes.get(name)
+    }
+
+    fn get_node_mut(&mut self, name: &str) -> Option<&mut DiNode> {
+        self.nodes.get_mut(name)
+    }
+
     fn get_nodes(&self) -> Vec<String> {
         let mut names = Vec::new();
         for name in self.nodes.keys() {
             names.push(name.clone());
         }
         names
+    }
+    
+    fn node_count(&self) -> usize {
+        self.nodes.len()
     }
 }
 
