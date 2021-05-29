@@ -121,6 +121,17 @@ impl DiGraph {
     }
 }
 impl Graph for DiGraph {
+    fn get_name(&self) -> Option<String> {
+        self.name.clone()
+    }
+
+    fn set_name(&mut self, name: Option<&str>) {
+        match name {
+            Some(name) => self.name = Some(name.to_string()),
+            _ => self.name = None,
+        }
+    }
+    
     fn add_node(&mut self, node: Node) {
         self.nodes.insert(node.name.clone(), node);
     }
@@ -155,6 +166,14 @@ impl Graph for DiGraph {
             let target = self.nodes.get_mut(to.unwrap()).unwrap();
             target.predecessors.insert(from.unwrap().to_string());
         }
+    }
+    
+    fn get_nodes(&self) -> Vec<String> {
+        let mut names = Vec::new();
+        for name in self.nodes.keys() {
+            names.push(name.clone());
+        }
+        names
     }
 }
 

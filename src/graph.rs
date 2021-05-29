@@ -19,6 +19,9 @@ pub use digraph::DiGraph;
 pub use node::Node;
 
 pub trait Graph {
+    fn get_name(&self) -> Option<String>;
+    fn set_name(&mut self, new_name: Option<&str>);
     fn add_node(&mut self, node: Node);
     fn add_edge(&mut self, name1: Option<&str>, name2: Option<&str>);
+    fn get_nodes(&self) -> Vec<String>;
 }

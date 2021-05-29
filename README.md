@@ -12,5 +12,6 @@ GraphX is a library of graph algorithms, and it is in rust. The motivations of t
 ### Change Log
 
 * 0.1.0
-    * Basic design of directed graph and node structs.
+    * Graph trait.
+    * DiGraph struct for directed graph and Node struct.
     * Graph-subgraph isomorphism.
