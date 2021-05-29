@@ -17,3 +17,8 @@ mod node;
 
 pub use digraph::DiGraph;
 pub use node::Node;
+
+pub trait Graph {
+    fn add_node(&mut self, node: Node);
+    fn add_edge(&mut self, name1: Option<&str>, name2: Option<&str>);
+}

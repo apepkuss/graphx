@@ -29,7 +29,7 @@ impl Node {
             name: name.to_string(),
             predecessors: HashSet::new(),
             successors: HashSet::new(),
-            weight: weight,
+            weight,
         }
     }
 

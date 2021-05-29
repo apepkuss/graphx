@@ -16,6 +16,8 @@ use super::node::Node;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use super::Graph;
+
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct DiGraph {
     name: Option<String>,
@@ -24,44 +26,8 @@ pub struct DiGraph {
 impl DiGraph {
     pub fn new(name: Option<String>) -> Self {
         DiGraph {
-            name: name,
+            name,
             nodes: HashMap::new(),
-        }
-    }
-
-    pub fn add_node(&mut self, node: Node) {
-        self.nodes.insert(node.name.clone(), node);
-    }
-
-    pub fn add_edge(&mut self, from: Option<&str>, to: Option<&str>) {
-        if from.is_some() {
-            // create a new node
-            let name = from.unwrap();
-            if !self.contains_node(name) {
-                self.nodes
-                    .entry(name.to_string())
-                    .or_insert(Node::new(name, None));
-            }
-        }
-
-        if to.is_some() {
-            // create a new node
-            let name = to.unwrap();
-            if !self.contains_node(name) {
-                self.nodes
-                    .entry(name.to_string())
-                    .or_insert(Node::new(name, None));
-            }
-        }
-
-        if from.is_some() && to.is_some() {
-            // update predecessors and successros of new nodes
-
-            let source = self.nodes.get_mut(from.unwrap()).unwrap();
-            source.successors.insert(to.unwrap().to_string());
-
-            let target = self.nodes.get_mut(to.unwrap()).unwrap();
-            target.predecessors.insert(from.unwrap().to_string());
         }
     }
 
@@ -152,6 +118,43 @@ impl DiGraph {
 
     pub fn contains_node(&self, name: &str) -> bool {
         self.nodes.contains_key(name)
+    }
+}
+impl Graph for DiGraph {
+    fn add_node(&mut self, node: Node) {
+        self.nodes.insert(node.name.clone(), node);
+    }
+
+    fn add_edge(&mut self, from: Option<&str>, to: Option<&str>) {
+        if from.is_some() {
+            // create a new node
+            let name = from.unwrap();
+            if !self.contains_node(name) {
+                self.nodes
+                    .entry(name.to_string())
+                    .or_insert(Node::new(name, None));
+            }
+        }
+
+        if to.is_some() {
+            // create a new node
+            let name = to.unwrap();
+            if !self.contains_node(name) {
+                self.nodes
+                    .entry(name.to_string())
+                    .or_insert(Node::new(name, None));
+            }
+        }
+
+        if from.is_some() && to.is_some() {
+            // update predecessors and successros of new nodes
+
+            let source = self.nodes.get_mut(from.unwrap()).unwrap();
+            source.successors.insert(to.unwrap().to_string());
+
+            let target = self.nodes.get_mut(to.unwrap()).unwrap();
+            target.predecessors.insert(from.unwrap().to_string());
+        }
     }
 }
 
