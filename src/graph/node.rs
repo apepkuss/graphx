@@ -20,8 +20,8 @@ use std::hash::{Hash, Hasher};
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Serialize)]
 pub struct DiNode {
     name: String,
-    pub predecessors: HashSet<String>,
-    pub successors: HashSet<String>,
+    predecessors: HashSet<String>,
+    successors: HashSet<String>,
     weight: Option<String>,
 }
 impl DiNode {
@@ -58,7 +58,7 @@ impl DiNode {
         self.successors.iter().map(|name| name.clone()).collect()
     }
 
-    pub fn add_successors(&mut self, name: &str) {
+    pub fn add_successor(&mut self, name: &str) {
         self.successors.insert(name.to_string());
     }
 
@@ -149,7 +149,7 @@ mod tests {
 
         let mut node = DiNode::new("A", Some("weight".to_string()));
         node.add_predecessor("B");
-        node.add_successors("C");
+        node.add_successor("C");
         let serialized = serde_json::to_string(&node).unwrap();
         assert_eq!(
             serialized,
@@ -164,7 +164,7 @@ mod tests {
 
         let mut expected = DiNode::new("A", Some("weight".to_string()));
         expected.add_predecessor("B");
-        expected.add_successors("C");
+        expected.add_successor("C");
 
         assert_eq!(expected, actual);
     }

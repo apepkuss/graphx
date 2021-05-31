@@ -72,11 +72,11 @@ impl<'a> DiGraphMatcher<'a> {
         DiGraphMatcher {
             g1: g1,
             g2: g2,
-            g1_nodes: g1.nodes.keys().map(|x| x.clone()).collect(),
-            g2_nodes: g2.nodes.keys().map(|x| x.clone()).collect(),
+            g1_nodes: g1.get_nodes().iter().map(|x| x.clone()).collect(),
+            g2_nodes: g2.get_nodes().iter().map(|x| x.clone()).collect(),
             g2_node_order: g2
-                .nodes
-                .keys()
+                .get_nodes()
+                .iter()
                 .enumerate()
                 .map(|(order, key)| (key.clone(), order))
                 .collect::<Vec<(String, usize)>>()
@@ -126,8 +126,8 @@ impl<'a> DiGraphMatcher<'a> {
     }
 
     pub fn syntactic_feasibility(&self, g1_node_name: String, g2_node_name: String) -> bool {
-        let g1_node = self.g1.nodes.get(g1_node_name.as_str()).unwrap();
-        let g2_node = self.g2.nodes.get(g2_node_name.as_str()).unwrap();
+        let g1_node = self.g1.get_node(g1_node_name.as_str()).unwrap();
+        let g2_node = self.g2.get_node(g2_node_name.as_str()).unwrap();
 
         // R_self for checking self loops
         // The number of selfloops for G1_node must equal the number of

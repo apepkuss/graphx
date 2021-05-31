@@ -21,7 +21,7 @@ use super::Graph;
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct DiGraph {
     name: Option<String>,
-    pub nodes: HashMap<String, DiNode>,
+    nodes: HashMap<String, DiNode>,
 }
 impl DiGraph {
     pub fn new(name: Option<String>) -> Self {
@@ -43,7 +43,7 @@ impl DiGraph {
             .get(name)
             .expect(format!("Not found node with name: {}", name).as_str());
         Ok(node
-            .predecessors
+            .get_predecessors()
             .iter()
             .map(|name| self.nodes.get(name.as_str()).unwrap())
             .collect())
@@ -60,7 +60,7 @@ impl DiGraph {
             .get_node(name)
             .expect(format!("Not found node with name: {}", name).as_str());
         Ok(node
-            .successors
+            .get_successors()
             .iter()
             .map(|name| self.nodes.get(name.as_str()).unwrap())
             .collect())
@@ -151,10 +151,10 @@ impl Graph for DiGraph {
             // update predecessors and successros of new nodes
 
             let source = self.nodes.get_mut(from.unwrap()).unwrap();
-            source.successors.insert(to.unwrap().to_string());
+            source.add_successor(to.unwrap());
 
             let target = self.nodes.get_mut(to.unwrap()).unwrap();
-            target.predecessors.insert(from.unwrap().to_string());
+            target.add_predecessor(from.unwrap());
         }
     }
 
