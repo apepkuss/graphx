@@ -315,17 +315,20 @@ impl<'a> DiGraphMatcher<'a> {
                         match result_pred_2 {
                             Ok(predecessors2) => {
                                 if predecessors2.iter().all(|&x| {
-                                    x.get_name() != *self.core_1.get(predecessor.get_name().as_str()).unwrap()
+                                    x.get_name()
+                                        != *self
+                                            .core_1
+                                            .get(predecessor.get_name().as_str())
+                                            .unwrap()
                                 }) {
                                     return false;
-                                } else if self
-                                    .g1
-                                    .edge_count(predecessor.get_name().as_str(), g1_node.get_name().as_str())
-                                    != self.g2.edge_count(
-                                        self.core_1.get(predecessor.get_name().as_str()).unwrap(),
-                                        g2_node.get_name().as_str(),
-                                    )
-                                {
+                                } else if self.g1.edge_count(
+                                    predecessor.get_name().as_str(),
+                                    g1_node.get_name().as_str(),
+                                ) != self.g2.edge_count(
+                                    self.core_1.get(predecessor.get_name().as_str()).unwrap(),
+                                    g2_node.get_name().as_str(),
+                                ) {
                                     return false;
                                 }
                             }
@@ -346,17 +349,20 @@ impl<'a> DiGraphMatcher<'a> {
                         match result_pred_1 {
                             Ok(predecessors1) => {
                                 if predecessors1.iter().all(|&x| {
-                                    x.get_name() != *self.core_2.get(predecessor2.get_name().as_str()).unwrap()
+                                    x.get_name()
+                                        != *self
+                                            .core_2
+                                            .get(predecessor2.get_name().as_str())
+                                            .unwrap()
                                 }) {
                                     return false;
-                                } else if self
-                                    .g2
-                                    .edge_count(predecessor2.get_name().as_str(), g2_node.get_name().as_str())
-                                    != self.g1.edge_count(
-                                        self.core_2.get(predecessor2.get_name().as_str()).unwrap(),
-                                        g1_node.get_name().as_str(),
-                                    )
-                                {
+                                } else if self.g2.edge_count(
+                                    predecessor2.get_name().as_str(),
+                                    g2_node.get_name().as_str(),
+                                ) != self.g1.edge_count(
+                                    self.core_2.get(predecessor2.get_name().as_str()).unwrap(),
+                                    g1_node.get_name().as_str(),
+                                ) {
                                     return false;
                                 }
                             }
@@ -385,17 +391,17 @@ impl<'a> DiGraphMatcher<'a> {
                         match result_succ {
                             Ok(successor_vec_2) => {
                                 if successor_vec_2.iter().all(|&x| {
-                                    x.get_name() != *self.core_1.get(successor1.get_name().as_str()).unwrap()
+                                    x.get_name()
+                                        != *self.core_1.get(successor1.get_name().as_str()).unwrap()
                                 }) {
                                     return false;
-                                } else if self
-                                    .g1
-                                    .edge_count(g1_node.get_name().as_str(), successor1.get_name().as_str())
-                                    != self.g2.edge_count(
-                                        g2_node.get_name().as_str(),
-                                        self.core_1.get(successor1.get_name().as_str()).unwrap(),
-                                    )
-                                {
+                                } else if self.g1.edge_count(
+                                    g1_node.get_name().as_str(),
+                                    successor1.get_name().as_str(),
+                                ) != self.g2.edge_count(
+                                    g2_node.get_name().as_str(),
+                                    self.core_1.get(successor1.get_name().as_str()).unwrap(),
+                                ) {
                                     return false;
                                 }
                             }
@@ -416,17 +422,17 @@ impl<'a> DiGraphMatcher<'a> {
                         match result_succ {
                             Ok(successor_vec_1) => {
                                 if successor_vec_1.iter().all(|&x| {
-                                    x.get_name() != *self.core_2.get(successor.get_name().as_str()).unwrap()
+                                    x.get_name()
+                                        != *self.core_2.get(successor.get_name().as_str()).unwrap()
                                 }) {
                                     return false;
-                                } else if self
-                                    .g2
-                                    .edge_count(g2_node.get_name().as_str(), successor.get_name().as_str())
-                                    != self.g1.edge_count(
-                                        g1_node.get_name().as_str(),
-                                        self.core_2.get(successor.get_name().as_str()).unwrap(),
-                                    )
-                                {
+                                } else if self.g2.edge_count(
+                                    g2_node.get_name().as_str(),
+                                    successor.get_name().as_str(),
+                                ) != self.g1.edge_count(
+                                    g1_node.get_name().as_str(),
+                                    self.core_2.get(successor.get_name().as_str()).unwrap(),
+                                ) {
                                     return false;
                                 }
                             }
@@ -806,7 +812,10 @@ impl DiGMState {
                 }
             }
             for node in new_nodes {
-                matcher.out_1.entry(node.get_name().clone()).or_insert(depth);
+                matcher
+                    .out_1
+                    .entry(node.get_name().clone())
+                    .or_insert(depth);
             }
 
             // Updates for Tout_2
@@ -825,7 +834,10 @@ impl DiGMState {
                 }
             }
             for node in new_nodes {
-                matcher.out_2.entry(node.get_name().clone()).or_insert(depth);
+                matcher
+                    .out_2
+                    .entry(node.get_name().clone())
+                    .or_insert(depth);
             }
         }
 

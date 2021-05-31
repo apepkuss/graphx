@@ -88,7 +88,7 @@ impl Hash for DiNode {
 }
 impl Node for DiNode {
     type Weight = String;
-    
+
     fn degree(&self) -> usize {
         self.in_degree() + self.out_degree()
     }

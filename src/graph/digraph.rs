@@ -173,7 +173,7 @@ impl Graph for DiGraph {
         }
         names
     }
-    
+
     fn node_count(&self) -> usize {
         self.nodes.len()
     }
