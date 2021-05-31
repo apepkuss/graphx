@@ -16,7 +16,7 @@ use super::node::DiNode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use super::Graph;
+use super::{Graph, Node};
 
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct DiGraph {
@@ -88,18 +88,6 @@ impl DiGraph {
         Ok(node.out_degree())
     }
 
-    // pub fn get_node(&self, name: &str) -> Option<&DiNode> {
-    //     self.nodes.get(name)
-    // }
-
-    // pub fn get_node_mut(&mut self, name: &str) -> Option<&mut DiNode> {
-    //     self.nodes.get_mut(name)
-    // }
-
-    // pub fn node_count(&self) -> usize {
-    //     self.nodes.len()
-    // }
-
     pub fn edge_count(&self, from: &str, to: &str) -> usize {
         let mut count = 0 as usize;
         let result_succ = self.successors(from);
@@ -121,6 +109,8 @@ impl DiGraph {
     }
 }
 impl Graph for DiGraph {
+    type Node = DiNode;
+
     fn get_name(&self) -> Option<String> {
         self.name.clone()
     }
@@ -133,7 +123,7 @@ impl Graph for DiGraph {
     }
 
     fn add_node(&mut self, node: DiNode) {
-        self.nodes.insert(node.name.clone(), node);
+        self.nodes.insert(node.get_name().clone(), node);
     }
 
     fn add_edge(&mut self, from: Option<&str>, to: Option<&str>) {

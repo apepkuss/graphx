@@ -79,6 +79,8 @@ impl Hash for DiNode {
     }
 }
 impl Node for DiNode {
+    type Weight = String;
+    
     fn get_name(&self) -> String {
         self.name.clone()
     }
