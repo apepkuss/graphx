@@ -32,8 +32,6 @@ pub trait Graph {
 
 pub trait Node {
     type Weight;
-    fn get_name(&self) -> String;
-    fn set_name(&mut self, new_name: &str);
     fn degree(&self) -> usize;
     fn neighbors(&self) -> Vec<String>;
 }

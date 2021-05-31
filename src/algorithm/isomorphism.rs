@@ -289,10 +289,10 @@ impl<'a> DiGraphMatcher<'a> {
     fn r_self(&self, g1_node: &DiNode, g2_node: &DiNode) -> bool {
         if self
             .g1
-            .edge_count(g1_node.name.as_str(), g1_node.name.as_str())
+            .edge_count(g1_node.get_name().as_str(), g1_node.get_name().as_str())
             != self
                 .g2
-                .edge_count(g2_node.name.as_str(), g2_node.name.as_str())
+                .edge_count(g2_node.get_name().as_str(), g2_node.get_name().as_str())
         {
             return false;
         }
@@ -306,24 +306,24 @@ impl<'a> DiGraphMatcher<'a> {
         // corresponding node m' is a predecessor of m, and vice versa. Also,
         // the number of edges must be equal
 
-        let result_pred_1 = self.g1.predecessors(g1_node.name.as_str());
+        let result_pred_1 = self.g1.predecessors(g1_node.get_name().as_str());
         match result_pred_1 {
             Ok(predecessors1) => {
                 for predecessor in predecessors1 {
-                    if self.core_1.contains_key(predecessor.name.as_str()) {
-                        let result_pred_2 = self.g2.predecessors(g2_node.name.as_str());
+                    if self.core_1.contains_key(predecessor.get_name().as_str()) {
+                        let result_pred_2 = self.g2.predecessors(g2_node.get_name().as_str());
                         match result_pred_2 {
                             Ok(predecessors2) => {
                                 if predecessors2.iter().all(|&x| {
-                                    x.name != *self.core_1.get(predecessor.name.as_str()).unwrap()
+                                    x.get_name() != *self.core_1.get(predecessor.get_name().as_str()).unwrap()
                                 }) {
                                     return false;
                                 } else if self
                                     .g1
-                                    .edge_count(predecessor.name.as_str(), g1_node.name.as_str())
+                                    .edge_count(predecessor.get_name().as_str(), g1_node.get_name().as_str())
                                     != self.g2.edge_count(
-                                        self.core_1.get(predecessor.name.as_str()).unwrap(),
-                                        g2_node.name.as_str(),
+                                        self.core_1.get(predecessor.get_name().as_str()).unwrap(),
+                                        g2_node.get_name().as_str(),
                                     )
                                 {
                                     return false;
@@ -337,24 +337,24 @@ impl<'a> DiGraphMatcher<'a> {
             Err(err) => panic!("{}", err.message),
         }
 
-        let result_pred_2 = self.g2.predecessors(g2_node.name.as_str());
+        let result_pred_2 = self.g2.predecessors(g2_node.get_name().as_str());
         match result_pred_2 {
             Ok(predecessors2) => {
                 for predecessor2 in predecessors2 {
-                    if self.core_2.contains_key(predecessor2.name.as_str()) {
-                        let result_pred_1 = self.g1.predecessors(g1_node.name.as_str());
+                    if self.core_2.contains_key(predecessor2.get_name().as_str()) {
+                        let result_pred_1 = self.g1.predecessors(g1_node.get_name().as_str());
                         match result_pred_1 {
                             Ok(predecessors1) => {
                                 if predecessors1.iter().all(|&x| {
-                                    x.name != *self.core_2.get(predecessor2.name.as_str()).unwrap()
+                                    x.get_name() != *self.core_2.get(predecessor2.get_name().as_str()).unwrap()
                                 }) {
                                     return false;
                                 } else if self
                                     .g2
-                                    .edge_count(predecessor2.name.as_str(), g2_node.name.as_str())
+                                    .edge_count(predecessor2.get_name().as_str(), g2_node.get_name().as_str())
                                     != self.g1.edge_count(
-                                        self.core_2.get(predecessor2.name.as_str()).unwrap(),
-                                        g1_node.name.as_str(),
+                                        self.core_2.get(predecessor2.get_name().as_str()).unwrap(),
+                                        g1_node.get_name().as_str(),
                                     )
                                 {
                                     return false;
@@ -367,7 +367,6 @@ impl<'a> DiGraphMatcher<'a> {
             }
             Err(err) => panic!("{}", err.message),
         }
-
         true
     }
 
@@ -377,24 +376,24 @@ impl<'a> DiGraphMatcher<'a> {
         // node m' is a successor of m, and vice versa. Also, the number of
         // edges must be equal.
 
-        let result_succ = self.g1.successors(g1_node.name.as_str());
+        let result_succ = self.g1.successors(g1_node.get_name().as_str());
         match result_succ {
             Ok(successor_vec_1) => {
                 for successor1 in successor_vec_1 {
-                    if self.core_1.contains_key(successor1.name.as_str()) {
-                        let result_succ = self.g2.successors(g2_node.name.as_str());
+                    if self.core_1.contains_key(successor1.get_name().as_str()) {
+                        let result_succ = self.g2.successors(g2_node.get_name().as_str());
                         match result_succ {
                             Ok(successor_vec_2) => {
                                 if successor_vec_2.iter().all(|&x| {
-                                    x.name != *self.core_1.get(successor1.name.as_str()).unwrap()
+                                    x.get_name() != *self.core_1.get(successor1.get_name().as_str()).unwrap()
                                 }) {
                                     return false;
                                 } else if self
                                     .g1
-                                    .edge_count(g1_node.name.as_str(), successor1.name.as_str())
+                                    .edge_count(g1_node.get_name().as_str(), successor1.get_name().as_str())
                                     != self.g2.edge_count(
-                                        g2_node.name.as_str(),
-                                        self.core_1.get(successor1.name.as_str()).unwrap(),
+                                        g2_node.get_name().as_str(),
+                                        self.core_1.get(successor1.get_name().as_str()).unwrap(),
                                     )
                                 {
                                     return false;
@@ -408,24 +407,24 @@ impl<'a> DiGraphMatcher<'a> {
             Err(err) => panic!("{}", err.message),
         }
 
-        let result_succ = self.g2.successors(g2_node.name.as_str());
+        let result_succ = self.g2.successors(g2_node.get_name().as_str());
         match result_succ {
             Ok(successor_vec_2) => {
                 for successor in successor_vec_2 {
-                    if self.core_2.contains_key(successor.name.as_str()) {
-                        let result_succ = self.g1.successors(g1_node.name.as_str());
+                    if self.core_2.contains_key(successor.get_name().as_str()) {
+                        let result_succ = self.g1.successors(g1_node.get_name().as_str());
                         match result_succ {
                             Ok(successor_vec_1) => {
                                 if successor_vec_1.iter().all(|&x| {
-                                    x.name != *self.core_2.get(successor.name.as_str()).unwrap()
+                                    x.get_name() != *self.core_2.get(successor.get_name().as_str()).unwrap()
                                 }) {
                                     return false;
                                 } else if self
                                     .g2
-                                    .edge_count(g2_node.name.as_str(), successor.name.as_str())
+                                    .edge_count(g2_node.get_name().as_str(), successor.get_name().as_str())
                                     != self.g1.edge_count(
-                                        g1_node.name.as_str(),
-                                        self.core_2.get(successor.name.as_str()).unwrap(),
+                                        g1_node.get_name().as_str(),
+                                        self.core_2.get(successor.get_name().as_str()).unwrap(),
                                     )
                                 {
                                     return false;
@@ -451,12 +450,12 @@ impl<'a> DiGraphMatcher<'a> {
         // Tin = in - core
 
         let mut num1 = 0;
-        let result_pred = self.g1.predecessors(g1_node.name.as_str());
+        let result_pred = self.g1.predecessors(g1_node.get_name().as_str());
         match result_pred {
             Ok(predecessor_vec) => {
                 for predecessor in predecessor_vec {
-                    if self.in_1.contains_key(predecessor.name.as_str())
-                        && !self.core_1.contains_key(predecessor.name.as_str())
+                    if self.in_1.contains_key(predecessor.get_name().as_str())
+                        && !self.core_1.contains_key(predecessor.get_name().as_str())
                     {
                         num1 += 1;
                     }
@@ -466,12 +465,12 @@ impl<'a> DiGraphMatcher<'a> {
         }
 
         let mut num2 = 0;
-        let result_pred = self.g2.predecessors(g2_node.name.as_str());
+        let result_pred = self.g2.predecessors(g2_node.get_name().as_str());
         match result_pred {
             Ok(predecessor_vec) => {
                 for predecessor in predecessor_vec {
-                    if self.in_2.contains_key(predecessor.name.as_str())
-                        && !self.core_2.contains_key(predecessor.name.as_str())
+                    if self.in_2.contains_key(predecessor.get_name().as_str())
+                        && !self.core_2.contains_key(predecessor.get_name().as_str())
                     {
                         num2 += 1;
                     }
@@ -492,12 +491,12 @@ impl<'a> DiGraphMatcher<'a> {
         // The number of successors of n that are in Tin_1 is equal to the
         // number of successors of m that are in Tin_2.
         let mut num1 = 0;
-        let result_succ = self.g1.successors(g1_node.name.as_str());
+        let result_succ = self.g1.successors(g1_node.get_name().as_str());
         match result_succ {
             Ok(successor_vec) => {
                 for successor in successor_vec {
-                    if self.in_1.contains_key(successor.name.as_str())
-                        && !self.core_1.contains_key(successor.name.as_str())
+                    if self.in_1.contains_key(successor.get_name().as_str())
+                        && !self.core_1.contains_key(successor.get_name().as_str())
                     {
                         num1 += 1;
                     }
@@ -507,12 +506,12 @@ impl<'a> DiGraphMatcher<'a> {
         }
 
         let mut num2 = 0;
-        let result_succ = self.g2.successors(g2_node.name.as_str());
+        let result_succ = self.g2.successors(g2_node.get_name().as_str());
         match result_succ {
             Ok(successor_vec) => {
                 for successor in successor_vec {
-                    if self.in_2.contains_key(successor.name.as_str())
-                        && !self.core_2.contains_key(successor.name.as_str())
+                    if self.in_2.contains_key(successor.get_name().as_str())
+                        && !self.core_2.contains_key(successor.get_name().as_str())
                     {
                         num2 += 1;
                     }
@@ -542,12 +541,12 @@ impl<'a> DiGraphMatcher<'a> {
         // Tout = out - core
 
         let mut num1 = 0;
-        let result_pred = self.g1.predecessors(g1_node.name.as_str());
+        let result_pred = self.g1.predecessors(g1_node.get_name().as_str());
         match result_pred {
             Ok(predecessor_vec) => {
                 for predecessor in predecessor_vec {
-                    if self.out_1.contains_key(predecessor.name.as_str())
-                        && !self.core_1.contains_key(predecessor.name.as_str())
+                    if self.out_1.contains_key(predecessor.get_name().as_str())
+                        && !self.core_1.contains_key(predecessor.get_name().as_str())
                     {
                         num1 += 1;
                     }
@@ -556,12 +555,12 @@ impl<'a> DiGraphMatcher<'a> {
             Err(err) => panic!("{}", err.message),
         }
         let mut num2 = 0;
-        let result_pred = self.g2.predecessors(g2_node.name.as_str());
+        let result_pred = self.g2.predecessors(g2_node.get_name().as_str());
         match result_pred {
             Ok(predecessor_vec) => {
                 for predecessor in predecessor_vec {
-                    if self.out_2.contains_key(predecessor.name.as_str())
-                        && !self.core_2.contains_key(predecessor.name.as_str())
+                    if self.out_2.contains_key(predecessor.get_name().as_str())
+                        && !self.core_2.contains_key(predecessor.get_name().as_str())
                     {
                         num2 += 1;
                     }
@@ -583,12 +582,12 @@ impl<'a> DiGraphMatcher<'a> {
         // number of successors of m that are in Tout_2.
 
         let mut num1 = 0;
-        let result_succ = self.g1.successors(g1_node.name.as_str());
+        let result_succ = self.g1.successors(g1_node.get_name().as_str());
         match result_succ {
             Ok(successor_vec) => {
                 for successor in successor_vec {
-                    if self.out_1.contains_key(successor.name.as_str())
-                        && !self.core_1.contains_key(successor.name.as_str())
+                    if self.out_1.contains_key(successor.get_name().as_str())
+                        && !self.core_1.contains_key(successor.get_name().as_str())
                     {
                         num1 += 1;
                     }
@@ -597,12 +596,12 @@ impl<'a> DiGraphMatcher<'a> {
             Err(err) => panic!("{}", err.message),
         }
         let mut num2 = 0;
-        let result_succ = self.g2.successors(g2_node.name.as_str());
+        let result_succ = self.g2.successors(g2_node.get_name().as_str());
         match result_succ {
             Ok(successor_vec) => {
                 for successor in successor_vec {
-                    if self.out_2.contains_key(successor.name.as_str())
-                        && !self.core_2.contains_key(successor.name.as_str())
+                    if self.out_2.contains_key(successor.get_name().as_str())
+                        && !self.core_2.contains_key(successor.get_name().as_str())
                     {
                         num2 += 1;
                     }
@@ -631,12 +630,12 @@ impl<'a> DiGraphMatcher<'a> {
         // that are neither in core_2 nor Tin_2 nor Tout_2.
 
         let mut num1 = 0;
-        let result_pred = self.g1.predecessors(g1_node.name.as_str());
+        let result_pred = self.g1.predecessors(g1_node.get_name().as_str());
         match result_pred {
             Ok(predecessor_vec) => {
                 for predecessor in predecessor_vec {
-                    if !self.in_1.contains_key(predecessor.name.as_str())
-                        && !self.out_1.contains_key(predecessor.name.as_str())
+                    if !self.in_1.contains_key(predecessor.get_name().as_str())
+                        && !self.out_1.contains_key(predecessor.get_name().as_str())
                     {
                         num1 += 1;
                     }
@@ -645,12 +644,12 @@ impl<'a> DiGraphMatcher<'a> {
             Err(err) => panic!("{}", err.message),
         }
         let mut num2 = 0;
-        let result_pred = self.g2.predecessors(g2_node.name.as_str());
+        let result_pred = self.g2.predecessors(g2_node.get_name().as_str());
         match result_pred {
             Ok(predecessor_vec) => {
                 for predecessor in predecessor_vec {
-                    if !self.in_2.contains_key(predecessor.name.as_str())
-                        && !self.out_2.contains_key(predecessor.name.as_str())
+                    if !self.in_2.contains_key(predecessor.get_name().as_str())
+                        && !self.out_2.contains_key(predecessor.get_name().as_str())
                     {
                         num2 += 1;
                     }
@@ -673,12 +672,12 @@ impl<'a> DiGraphMatcher<'a> {
         // that are neither in core_2 nor Tin_2 nor Tout_2.
 
         let mut num1 = 0;
-        let result_succ = self.g1.successors(g1_node.name.as_str());
+        let result_succ = self.g1.successors(g1_node.get_name().as_str());
         match result_succ {
             Ok(successor_vec) => {
                 for successor in successor_vec {
-                    if !self.in_1.contains_key(successor.name.as_str())
-                        && !self.out_1.contains_key(successor.name.as_str())
+                    if !self.in_1.contains_key(successor.get_name().as_str())
+                        && !self.out_1.contains_key(successor.get_name().as_str())
                     {
                         num1 += 1;
                     }
@@ -687,12 +686,12 @@ impl<'a> DiGraphMatcher<'a> {
             Err(err) => panic!("{}", err.message),
         }
         let mut num2 = 0;
-        let result_succ = self.g2.successors(g2_node.name.as_str());
+        let result_succ = self.g2.successors(g2_node.get_name().as_str());
         match result_succ {
             Ok(successor_vec) => {
                 for successor in successor_vec {
-                    if !self.in_2.contains_key(successor.name.as_str())
-                        && !self.out_2.contains_key(successor.name.as_str())
+                    if !self.in_2.contains_key(successor.get_name().as_str())
+                        && !self.out_2.contains_key(successor.get_name().as_str())
                     {
                         num2 += 1;
                     }
@@ -760,7 +759,7 @@ impl DiGMState {
                 match result_pred {
                     Ok(predecessor_vec) => {
                         for predecessor in predecessor_vec {
-                            if !matcher.core_1.contains_key(predecessor.name.as_str()) {
+                            if !matcher.core_1.contains_key(predecessor.get_name().as_str()) {
                                 new_nodes.insert(predecessor);
                             }
                         }
@@ -769,7 +768,7 @@ impl DiGMState {
                 }
             }
             for node in new_nodes {
-                matcher.in_1.entry(node.name.clone()).or_insert(depth);
+                matcher.in_1.entry(node.get_name().clone()).or_insert(depth);
             }
 
             // Updates for Tin_2
@@ -779,7 +778,7 @@ impl DiGMState {
                 match result_pred {
                     Ok(predecessor_vec) => {
                         for predecessor in predecessor_vec {
-                            if !matcher.core_2.contains_key(predecessor.name.as_str()) {
+                            if !matcher.core_2.contains_key(predecessor.get_name().as_str()) {
                                 new_nodes.insert(predecessor);
                             }
                         }
@@ -788,7 +787,7 @@ impl DiGMState {
                 }
             }
             for node in new_nodes {
-                matcher.in_2.entry(node.name.clone()).or_insert(depth);
+                matcher.in_2.entry(node.get_name().clone()).or_insert(depth);
             }
 
             // Updates for Tout_1
@@ -798,7 +797,7 @@ impl DiGMState {
                 match result_succ {
                     Ok(successor_vec) => {
                         for successor in successor_vec {
-                            if !matcher.core_1.contains_key(successor.name.as_str()) {
+                            if !matcher.core_1.contains_key(successor.get_name().as_str()) {
                                 new_nodes.insert(successor);
                             }
                         }
@@ -807,7 +806,7 @@ impl DiGMState {
                 }
             }
             for node in new_nodes {
-                matcher.out_1.entry(node.name.clone()).or_insert(depth);
+                matcher.out_1.entry(node.get_name().clone()).or_insert(depth);
             }
 
             // Updates for Tout_2
@@ -817,7 +816,7 @@ impl DiGMState {
                 match result_succ {
                     Ok(successor_vec) => {
                         for successor in successor_vec {
-                            if !matcher.core_2.contains_key(successor.name.as_str()) {
+                            if !matcher.core_2.contains_key(successor.get_name().as_str()) {
                                 new_nodes.insert(successor);
                             }
                         }
@@ -826,7 +825,7 @@ impl DiGMState {
                 }
             }
             for node in new_nodes {
-                matcher.out_2.entry(node.name.clone()).or_insert(depth);
+                matcher.out_2.entry(node.get_name().clone()).or_insert(depth);
             }
         }
 

@@ -16,7 +16,7 @@ use super::node::DiNode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-use super::{Graph, Node};
+use super::Graph;
 
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct DiGraph {
@@ -94,7 +94,7 @@ impl DiGraph {
         match result_succ {
             Ok(successor_vec) => {
                 for succ in successor_vec {
-                    if succ.name == to {
+                    if succ.get_name() == to {
                         count += 1;
                     }
                 }

@@ -19,7 +19,7 @@ use std::hash::{Hash, Hasher};
 
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Serialize)]
 pub struct DiNode {
-    pub name: String,
+    name: String,
     pub predecessors: HashSet<String>,
     pub successors: HashSet<String>,
     weight: Option<String>,
@@ -32,6 +32,14 @@ impl DiNode {
             successors: HashSet::new(),
             weight,
         }
+    }
+
+    pub fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
+    pub fn set_name(&mut self, name: &str) {
+        self.name = name.to_string();
     }
 
     pub fn get_predecessors(&self) -> Vec<String> {
@@ -81,14 +89,6 @@ impl Hash for DiNode {
 impl Node for DiNode {
     type Weight = String;
     
-    fn get_name(&self) -> String {
-        self.name.clone()
-    }
-
-    fn set_name(&mut self, name: &str) {
-        self.name = name.to_string();
-    }
-
     fn degree(&self) -> usize {
         self.in_degree() + self.out_degree()
     }
@@ -134,6 +134,8 @@ mod tests {
         g.add_edge(Some("H"), Some("I"));
         g.add_edge(Some("I"), Some("J"));
 
+        assert_eq!(g.get_node("A").unwrap().degree(), 1);
+        assert_eq!(g.get_node("E").unwrap().degree(), 3);
     }
 
     #[test]
