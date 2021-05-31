@@ -20,16 +20,16 @@ use std::hash::{Hash, Hasher};
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Serialize)]
 pub struct DiNode {
     name: String,
-    predecessors: HashSet<String>,
-    successors: HashSet<String>,
+    inputs: HashSet<String>,
+    outputs: HashSet<String>,
     weight: Option<String>,
 }
 impl DiNode {
     pub fn new(name: &str, weight: Option<String>) -> Self {
         DiNode {
             name: name.to_string(),
-            predecessors: HashSet::new(),
-            successors: HashSet::new(),
+            inputs: HashSet::new(),
+            outputs: HashSet::new(),
             weight,
         }
     }
@@ -43,35 +43,35 @@ impl DiNode {
     }
 
     pub fn get_predecessors(&self) -> Vec<String> {
-        self.predecessors.iter().map(|name| name.clone()).collect()
+        self.inputs.iter().map(|name| name.clone()).collect()
     }
 
     pub fn add_predecessor(&mut self, name: &str) {
-        self.predecessors.insert(name.to_string());
+        self.inputs.insert(name.to_string());
     }
 
     pub fn remove_predecessor(&mut self, name: &str) {
-        self.predecessors.remove(name);
+        self.inputs.remove(name);
     }
 
     pub fn get_successors(&self) -> Vec<String> {
-        self.successors.iter().map(|name| name.clone()).collect()
+        self.outputs.iter().map(|name| name.clone()).collect()
     }
 
     pub fn add_successor(&mut self, name: &str) {
-        self.successors.insert(name.to_string());
+        self.outputs.insert(name.to_string());
     }
 
     pub fn remove_successor(&mut self, name: &str) {
-        self.successors.remove(name);
+        self.outputs.remove(name);
     }
 
     pub fn in_degree(&self) -> usize {
-        self.predecessors.len()
+        self.inputs.len()
     }
 
     pub fn out_degree(&self) -> usize {
-        self.successors.len()
+        self.outputs.len()
     }
 
     pub fn get_weight(&self) -> Option<String> {
