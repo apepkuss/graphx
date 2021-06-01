@@ -144,7 +144,7 @@ mod tests {
         let serialized = serde_json::to_string(&node).unwrap();
         assert_eq!(
             serialized,
-            r#"{"name":"A","predecessors":[],"successors":[],"weight":null}"#
+            r#"{"name":"A","inputs":[],"outputs":[],"weight":null}"#
         );
 
         let mut node = DiNode::new("A", Some("weight".to_string()));
@@ -153,13 +153,13 @@ mod tests {
         let serialized = serde_json::to_string(&node).unwrap();
         assert_eq!(
             serialized,
-            r#"{"name":"A","predecessors":["B"],"successors":["C"],"weight":"weight"}"#
+            r#"{"name":"A","inputs":["B"],"outputs":["C"],"weight":"weight"}"#
         );
     }
 
     #[test]
     fn test_json_to_node() {
-        let json_str = r#"{"name":"A","predecessors":["B"],"successors":["C"],"weight":"weight"}"#;
+        let json_str = r#"{"name":"A","inputs":["B"],"outputs":["C"],"weight":"weight"}"#;
         let actual: DiNode = serde_json::from_str(json_str).unwrap();
 
         let mut expected = DiNode::new("A", Some("weight".to_string()));

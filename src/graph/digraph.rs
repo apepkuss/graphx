@@ -199,15 +199,15 @@ mod tests {
         let mut g = DiGraph::new(None);
         g.add_edge(Some("A"), Some("B"));
 
-        let expected1 = r#"{"name":null,"nodes":{"B":{"name":"B","predecessors":["A"],"successors":[],"weight":null},"A":{"name":"A","predecessors":[],"successors":["B"],"weight":null}}}"#;
-        let expected2 = r#"{"name":null,"nodes":{"A":{"name":"A","predecessors":[],"successors":["B"],"weight":null},"B":{"name":"B","predecessors":["A"],"successors":[],"weight":null}}}"#;
+        let expected1 = r#"{"name":null,"nodes":{"B":{"name":"B","inputs":["A"],"outputs":[],"weight":null},"A":{"name":"A","inputs":[],"outputs":["B"],"weight":null}}}"#;
+        let expected2 = r#"{"name":null,"nodes":{"A":{"name":"A","inputs":[],"outputs":["B"],"weight":null},"B":{"name":"B","inputs":["A"],"outputs":[],"weight":null}}}"#;
         let actual = serde_json::to_string(&g).unwrap();
         assert!(expected1 == actual || expected2 == actual);
     }
 
     #[test]
     fn test_json_to_digraph() {
-        let json_str = r#"{"nodes":{"B":{"name":"B","predecessors":["A"],"successors":[]},"A":{"name":"A","predecessors":[],"successors":["B"]}}}"#;
+        let json_str = r#"{"nodes":{"B":{"name":"B","inputs":["A"],"outputs":[]},"A":{"name":"A","inputs":[],"outputs":["B"]}}}"#;
         let actual: DiGraph = serde_json::from_str(json_str).unwrap();
 
         let mut g = DiGraph::new(None);
