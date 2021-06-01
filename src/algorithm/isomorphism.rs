@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::graph::{DiNode, NotFoundNodeError};
 use std::collections::{HashMap, HashSet};
+use std::hash::Hash;
 
-use crate::graph::{DiGraph, DiNode, Graph};
-
-pub struct DiGraphMatcher<'a> {
-    pub g1: &'a DiGraph,
-    pub g2: &'a DiGraph,
+pub struct DiGraphMatcher<'a, T>
+where
+    T: GMGraph,
+{
+    pub g1: &'a T,
+    pub g2: &'a T,
 
     pub g1_nodes: HashSet<String>,
     pub g2_nodes: HashSet<String>,
@@ -67,11 +70,14 @@ pub struct DiGraphMatcher<'a> {
     // Provide a convenient way to access the isomorphism mapping.
     pub mapping: HashMap<String, String>,
 }
-impl<'a> DiGraphMatcher<'a> {
-    pub fn new(g1: &'a DiGraph, g2: &'a DiGraph) -> Self {
+impl<'a, T> DiGraphMatcher<'a, T>
+where
+    T: GMGraph,
+{
+    pub fn new(g1: &'a T, g2: &'a T) -> Self {
         DiGraphMatcher {
-            g1: g1,
-            g2: g2,
+            g1,
+            g2,
             g1_nodes: g1.get_nodes().iter().map(|x| x.clone()).collect(),
             g2_nodes: g2.get_nodes().iter().map(|x| x.clone()).collect(),
             g2_node_order: g2
@@ -725,8 +731,8 @@ pub struct DiGMState {
     pub depth: usize,
 }
 impl DiGMState {
-    pub fn create(
-        matcher: &mut DiGraphMatcher,
+    pub fn create<T: GMGraph>(
+        matcher: &mut DiGraphMatcher<T>,
         g1_node: Option<String>,
         g2_node: Option<String>,
     ) -> DiGMState {
@@ -856,7 +862,7 @@ impl DiGMState {
         }
     }
 
-    pub fn restore(&self, matcher: &mut DiGraphMatcher) {
+    pub fn restore<T: GMGraph>(&self, matcher: &mut DiGraphMatcher<T>) {
         // First we remove the node that was added from the core vectors.
         // Watch out! G1_node == 0 should evaluate to True.
         if self.g1_node.is_some() && self.g2_node.is_some() {
@@ -911,4 +917,18 @@ impl DiGMState {
             matcher.out_2.remove(key.as_str());
         }
     }
+}
+
+pub trait GMGraph {
+    type Node: GMNode + Eq + Hash;
+    fn get_nodes(&self) -> Vec<String>;
+    fn get_node(&self, name: &str) -> Option<&DiNode>;
+    fn node_count(&self) -> usize;
+    fn edge_count(&self, from: &str, to: &str) -> usize;
+    fn predecessors(&self, name: &str) -> Result<Vec<&Self::Node>, NotFoundNodeError>;
+    fn successors(&self, name: &str) -> Result<Vec<&Self::Node>, NotFoundNodeError>;
+}
+
+pub trait GMNode {
+    fn get_name(&self) -> String;
 }
