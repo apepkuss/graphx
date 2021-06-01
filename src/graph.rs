@@ -15,23 +15,5 @@
 mod digraph;
 mod node;
 
-pub use digraph::DiGraph;
+pub use digraph::{DiGraph, NotFoundNodeError};
 pub use node::DiNode;
-
-pub trait Graph {
-    type Node;
-    fn get_name(&self) -> Option<String>;
-    fn set_name(&mut self, new_name: Option<&str>);
-    fn add_node(&mut self, node: Self::Node);
-    fn add_edge(&mut self, name1: Option<&str>, name2: Option<&str>);
-    fn get_nodes(&self) -> Vec<String>;
-    fn get_node(&self, name: &str) -> Option<&Self::Node>;
-    fn get_node_mut(&mut self, name: &str) -> Option<&mut Self::Node>;
-    fn node_count(&self) -> usize;
-}
-
-pub trait Node {
-    type Weight;
-    fn degree(&self) -> usize;
-    fn neighbors(&self) -> Vec<String>;
-}
