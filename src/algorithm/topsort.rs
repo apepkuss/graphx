@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::graph::{DiGraph, DiNode, Graph};
+use crate::graph::{DiGraph, DiNode};
 use std::collections::{HashMap, VecDeque};
 
 /// topological sort

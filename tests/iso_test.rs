@@ -14,7 +14,7 @@
 
 use graphx::{
     algorithm::isomorphism as iso,
-    graph::{DiGraph, DiNode, Graph},
+    graph::{DiGraph, DiNode},
 };
 
 #[test]
