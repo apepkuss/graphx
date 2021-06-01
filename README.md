@@ -12,9 +12,8 @@ GraphX is a library of graph algorithms, and it is in rust. The motivations of t
 ### Change Log
 
 * 0.1.0
-    * Graph trait
-    * Node trait
     * DiGraph struct and DiNode struct
+    * GMGraph and GMNode traits for iso algorithm
     * algorithm mod
         * Graph-subgraph isomorphism
         * Topsort
