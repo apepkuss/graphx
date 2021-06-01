@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::graph::Node;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
+use crate::algorithm::isomorphism::GMNode;
 
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Serialize)]
 pub struct DiNode {
@@ -86,57 +86,15 @@ impl Hash for DiNode {
         self.name.hash(state);
     }
 }
-impl Node for DiNode {
-    type Weight = String;
-
-    fn degree(&self) -> usize {
-        self.in_degree() + self.out_degree()
-    }
-
-    fn neighbors(&self) -> Vec<String> {
-        let mut names = Vec::new();
-
-        for name in self.get_predecessors().iter() {
-            names.push(name.clone());
-        }
-
-        for name in self.get_successors().iter() {
-            names.push(name.clone());
-        }
-
-        names
+impl GMNode for DiNode {
+    fn get_name(&self) -> String {
+        self.name.clone()
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::graph::{DiGraph, Graph};
-    #[test]
-    fn test_degree() {
-        let mut g = DiGraph::new(None);
-        g.add_node(DiNode::new("A", Some("A".to_string())));
-        g.add_node(DiNode::new("B", Some("B".to_string())));
-        g.add_node(DiNode::new("C", Some("C".to_string())));
-        g.add_node(DiNode::new("D", Some("D".to_string())));
-        g.add_node(DiNode::new("E", Some("E".to_string())));
-        g.add_node(DiNode::new("F", Some("F".to_string())));
-        g.add_node(DiNode::new("G", Some("G".to_string())));
-        g.add_node(DiNode::new("H", Some("H".to_string())));
-        g.add_node(DiNode::new("I", Some("I".to_string())));
-        g.add_node(DiNode::new("J", Some("J".to_string())));
-        g.add_edge(Some("A"), Some("B"));
-        g.add_edge(Some("B"), Some("C"));
-        g.add_edge(Some("C"), Some("E"));
-        g.add_edge(Some("D"), Some("E"));
-        g.add_edge(Some("E"), Some("F"));
-        g.add_edge(Some("F"), Some("G"));
-        g.add_edge(Some("G"), Some("I"));
-        g.add_edge(Some("H"), Some("I"));
-        g.add_edge(Some("I"), Some("J"));
-
-        assert_eq!(g.get_node("A").unwrap().degree(), 1);
-        assert_eq!(g.get_node("E").unwrap().degree(), 3);
-    }
 
     #[test]
     fn test_node_to_json() {

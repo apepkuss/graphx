@@ -15,8 +15,7 @@
 use super::node::DiNode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
-use super::Graph;
+use crate::algorithm::isomorphism::GMGraph;
 
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct DiGraph {
@@ -31,6 +30,73 @@ impl DiGraph {
         }
     }
 
+    pub fn get_name(&self) -> Option<String> {
+        self.name.clone()
+    }
+
+    pub fn set_name(&mut self, name: Option<&str>) {
+        match name {
+            Some(name) => self.name = Some(name.to_string()),
+            _ => self.name = None,
+        }
+    }
+
+    pub fn add_node(&mut self, node: DiNode) {
+        self.nodes.insert(node.get_name().clone(), node);
+    }
+
+    pub fn add_edge(&mut self, from: Option<&str>, to: Option<&str>) {
+        if from.is_some() {
+            // create a new node
+            let name = from.unwrap();
+            if !self.contains_node(name) {
+                self.nodes
+                    .entry(name.to_string())
+                    .or_insert(DiNode::new(name, None));
+            }
+        }
+
+        if to.is_some() {
+            // create a new node
+            let name = to.unwrap();
+            if !self.contains_node(name) {
+                self.nodes
+                    .entry(name.to_string())
+                    .or_insert(DiNode::new(name, None));
+            }
+        }
+
+        if from.is_some() && to.is_some() {
+            // update predecessors and successros of new nodes
+
+            let source = self.nodes.get_mut(from.unwrap()).unwrap();
+            source.add_successor(to.unwrap());
+
+            let target = self.nodes.get_mut(to.unwrap()).unwrap();
+            target.add_predecessor(from.unwrap());
+        }
+    }
+
+    pub fn get_node(&self, name: &str) -> Option<&DiNode> {
+        self.nodes.get(name)
+    }
+
+    pub fn get_node_mut(&mut self, name: &str) -> Option<&mut DiNode> {
+        self.nodes.get_mut(name)
+    }
+
+    pub fn get_nodes(&self) -> Vec<String> {
+        let mut names = Vec::new();
+        for name in self.nodes.keys() {
+            names.push(name.clone());
+        }
+        names
+    }
+
+    pub fn node_count(&self) -> usize {
+        self.nodes.len()
+    }
+    
     pub fn predecessors(&self, name: &str) -> Result<Vec<&DiNode>, NotFoundNodeError> {
         if !self.nodes.contains_key(name) {
             return Err(NotFoundNodeError {
@@ -108,62 +174,31 @@ impl DiGraph {
         self.nodes.contains_key(name)
     }
 }
-impl Graph for DiGraph {
+impl GMGraph for DiGraph {
     type Node = DiNode;
-
-    fn get_name(&self) -> Option<String> {
-        self.name.clone()
+    
+    fn node_count(&self) -> usize {
+        self.nodes.len()
     }
 
-    fn set_name(&mut self, name: Option<&str>) {
-        match name {
-            Some(name) => self.name = Some(name.to_string()),
-            _ => self.name = None,
-        }
-    }
-
-    fn add_node(&mut self, node: DiNode) {
-        self.nodes.insert(node.get_name().clone(), node);
-    }
-
-    fn add_edge(&mut self, from: Option<&str>, to: Option<&str>) {
-        if from.is_some() {
-            // create a new node
-            let name = from.unwrap();
-            if !self.contains_node(name) {
-                self.nodes
-                    .entry(name.to_string())
-                    .or_insert(DiNode::new(name, None));
+    fn edge_count(&self, from: &str, to: &str) -> usize {
+        let mut count = 0 as usize;
+        let result_succ = self.successors(from);
+        match result_succ {
+            Ok(successor_vec) => {
+                for succ in successor_vec {
+                    if succ.get_name() == to {
+                        count += 1;
+                    }
+                }
             }
+            Err(err) => panic!("{}", err.message),
         }
-
-        if to.is_some() {
-            // create a new node
-            let name = to.unwrap();
-            if !self.contains_node(name) {
-                self.nodes
-                    .entry(name.to_string())
-                    .or_insert(DiNode::new(name, None));
-            }
-        }
-
-        if from.is_some() && to.is_some() {
-            // update predecessors and successros of new nodes
-
-            let source = self.nodes.get_mut(from.unwrap()).unwrap();
-            source.add_successor(to.unwrap());
-
-            let target = self.nodes.get_mut(to.unwrap()).unwrap();
-            target.add_predecessor(from.unwrap());
-        }
+        count
     }
 
     fn get_node(&self, name: &str) -> Option<&DiNode> {
         self.nodes.get(name)
-    }
-
-    fn get_node_mut(&mut self, name: &str) -> Option<&mut DiNode> {
-        self.nodes.get_mut(name)
     }
 
     fn get_nodes(&self) -> Vec<String> {
@@ -174,8 +209,38 @@ impl Graph for DiGraph {
         names
     }
 
-    fn node_count(&self) -> usize {
-        self.nodes.len()
+    fn predecessors(&self, name: &str) -> Result<Vec<&DiNode>, NotFoundNodeError> {
+        if !self.nodes.contains_key(name) {
+            return Err(NotFoundNodeError {
+                message: format!("Not found node: {}", name),
+            });
+        }
+
+        let node = self
+            .nodes
+            .get(name)
+            .expect(format!("Not found node with name: {}", name).as_str());
+        Ok(node
+            .get_predecessors()
+            .iter()
+            .map(|name| self.nodes.get(name.as_str()).unwrap())
+            .collect())
+    }
+
+    fn successors(&self, name: &str) -> Result<Vec<&DiNode>, NotFoundNodeError> {
+        if !self.nodes.contains_key(name) {
+            return Err(NotFoundNodeError {
+                message: format!("Not found node: {}", name),
+            });
+        }
+
+        let node = GMGraph::get_node(self, name)
+            .expect(format!("Not found node with name: {}", name).as_str());
+        Ok(node
+            .get_successors()
+            .iter()
+            .map(|name| self.nodes.get(name.as_str()).unwrap())
+            .collect())
     }
 }
 
