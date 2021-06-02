@@ -90,6 +90,13 @@ impl GMNode for DiNode {
     fn get_name(&self) -> String {
         self.name.clone()
     }
+    
+    fn get_weight(&self) -> Option<String> {
+        if self.weight.is_some() {
+            return self.weight.clone();
+        }
+        None
+    }
 }
 
 #[cfg(test)]
