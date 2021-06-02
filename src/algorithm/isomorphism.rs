@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::graph::{DiNode, NotFoundNodeError};
+use crate::graph::NotFoundNodeError;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
@@ -139,7 +139,7 @@ where
         // The number of selfloops for G1_node must equal the number of
         // self-loops for G2_node. Without this check, we would fail on R_pred
         // at the next recursion level. This should prune the tree even further.
-        if !self.r_self(&g1_node, &g2_node) {
+        if !self.r_self(g1_node, g2_node) {
             return false;
         }
 
@@ -292,7 +292,7 @@ where
     /// The number of selfloops for G1_node must equal the number of
     /// self-loops for G2_node. Without this check, we would fail on R_pred
     /// at the next recursion level. This should prune the tree even further.
-    fn r_self(&self, g1_node: &DiNode, g2_node: &DiNode) -> bool {
+    fn r_self<N: GMNode>(&self, g1_node: &N, g2_node: &N) -> bool {
         if self
             .g1
             .edge_count(g1_node.get_name().as_str(), g1_node.get_name().as_str())
@@ -307,7 +307,7 @@ where
     }
 
     /// R_pred and R_succ for checking the consistency of the partial solution
-    fn r_pred(&self, g1_node: &DiNode, g2_node: &DiNode) -> bool {
+    fn r_pred<N: GMNode>(&self, g1_node: &N, g2_node: &N) -> bool {
         // For each predecessor n' of n in the partial mapping, the
         // corresponding node m' is a predecessor of m, and vice versa. Also,
         // the number of edges must be equal
@@ -383,7 +383,7 @@ where
     }
 
     /// R_pred and R_succ for checking the consistency of the partial solution
-    fn r_succ(&self, g1_node: &DiNode, g2_node: &DiNode) -> bool {
+    fn r_succ<N: GMNode>(&self, g1_node: &N, g2_node: &N) -> bool {
         // For each successor n' of n in the partial mapping, the corresponding
         // node m' is a successor of m, and vice versa. Also, the number of
         // edges must be equal.
@@ -455,7 +455,7 @@ where
 
     /// R_in, R_out and R_new for pruning the search tree
     /// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
-    fn r_in(&self, g1_node: &DiNode, g2_node: &DiNode) -> bool {
+    fn r_in<N: GMNode>(&self, g1_node: &N, g2_node: &N) -> bool {
         // The number of predecessors of n that are in Tin_1 is equal to the
         // number of predecessors of m that are in Tin_2.
 
@@ -546,7 +546,7 @@ where
 
     /// R_in, R_out and R_new for pruning the search tree
     /// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
-    fn r_out(&self, g1_node: &DiNode, g2_node: &DiNode) -> bool {
+    fn r_out<N: GMNode>(&self, g1_node: &N, g2_node: &N) -> bool {
         // The number of predecessors of n that are in Tout_1 is equal to the
         // number of predecessors of m that are in Tout_2.
 
@@ -636,7 +636,7 @@ where
 
     /// R_in, R_out and R_new for pruning the search tree
     /// R_in and R_out is 1-look-ahead, and R_new is 2-look-ahead
-    fn r_new(&self, g1_node: &DiNode, g2_node: &DiNode) -> bool {
+    fn r_new<N: GMNode>(&self, g1_node: &N, g2_node: &N) -> bool {
         // The number of predecessors of n that are neither in the core_1 nor
         // Tin_1 nor Tout_1 is equal to the number of predecessors of m
         // that are neither in core_2 nor Tin_2 nor Tout_2.
@@ -922,7 +922,7 @@ impl DiGMState {
 pub trait GMGraph {
     type Node: GMNode + Eq + Hash;
     fn get_nodes(&self) -> Vec<String>;
-    fn get_node(&self, name: &str) -> Option<&DiNode>;
+    fn get_node(&self, name: &str) -> Option<&Self::Node>;
     fn node_count(&self) -> usize;
     fn edge_count(&self, from: &str, to: &str) -> usize;
     fn predecessors(&self, name: &str) -> Result<Vec<&Self::Node>, NotFoundNodeError>;
@@ -931,4 +931,5 @@ pub trait GMGraph {
 
 pub trait GMNode {
     fn get_name(&self) -> String;
+    fn get_weight(&self) -> Option<String>;
 }
