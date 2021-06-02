@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::graph::NotFoundNodeError;
+use crate::graph::{GraphError};
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
 
@@ -925,8 +925,8 @@ pub trait GMGraph {
     fn get_node(&self, name: &str) -> Option<&Self::Node>;
     fn node_count(&self) -> usize;
     fn edge_count(&self, from: &str, to: &str) -> usize;
-    fn predecessors(&self, name: &str) -> Result<Vec<&Self::Node>, NotFoundNodeError>;
-    fn successors(&self, name: &str) -> Result<Vec<&Self::Node>, NotFoundNodeError>;
+    fn predecessors(&self, name: &str) -> Result<Vec<&Self::Node>, GraphError>;
+    fn successors(&self, name: &str) -> Result<Vec<&Self::Node>, GraphError>;
 }
 
 pub trait GMNode {

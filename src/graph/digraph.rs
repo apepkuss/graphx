@@ -97,10 +97,11 @@ impl DiGraph {
         self.nodes.len()
     }
     
-    pub fn predecessors(&self, name: &str) -> Result<Vec<&DiNode>, NotFoundNodeError> {
+    pub fn predecessors(&self, name: &str) -> Result<Vec<&DiNode>, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(NotFoundNodeError {
+            return Err(GraphError {
                 message: format!("Not found node: {}", name),
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
             });
         }
 
@@ -115,10 +116,11 @@ impl DiGraph {
             .collect())
     }
 
-    pub fn successors(&self, name: &str) -> Result<Vec<&DiNode>, NotFoundNodeError> {
+    pub fn successors(&self, name: &str) -> Result<Vec<&DiNode>, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(NotFoundNodeError {
+            return Err(GraphError {
                 message: format!("Not found node: {}", name),
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
             });
         }
 
@@ -132,10 +134,11 @@ impl DiGraph {
             .collect())
     }
 
-    pub fn in_degree(&self, name: &str) -> Result<usize, NotFoundNodeError> {
+    pub fn in_degree(&self, name: &str) -> Result<usize, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(NotFoundNodeError {
+            return Err(GraphError {
                 message: format!("Not found node: {}", name),
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
             });
         }
 
@@ -143,10 +146,11 @@ impl DiGraph {
         Ok(node.in_degree())
     }
 
-    pub fn out_degree(&self, name: &str) -> Result<usize, NotFoundNodeError> {
+    pub fn out_degree(&self, name: &str) -> Result<usize, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(NotFoundNodeError {
+            return Err(GraphError {
                 message: format!("Not found node: {}", name),
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
             });
         }
 
@@ -209,10 +213,11 @@ impl GMGraph for DiGraph {
         names
     }
 
-    fn predecessors(&self, name: &str) -> Result<Vec<&DiNode>, NotFoundNodeError> {
+    fn predecessors(&self, name: &str) -> Result<Vec<&DiNode>, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(NotFoundNodeError {
+            return Err(GraphError {
                 message: format!("Not found node: {}", name),
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
             });
         }
 
@@ -227,10 +232,11 @@ impl GMGraph for DiGraph {
             .collect())
     }
 
-    fn successors(&self, name: &str) -> Result<Vec<&DiNode>, NotFoundNodeError> {
+    fn successors(&self, name: &str) -> Result<Vec<&DiNode>, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(NotFoundNodeError {
+            return Err(GraphError {
                 message: format!("Not found node: {}", name),
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
             });
         }
 
@@ -245,16 +251,21 @@ impl GMGraph for DiGraph {
 }
 
 #[derive(Debug)]
-pub struct NotFoundNodeError {
+pub struct GraphError {
     pub message: String,
+    pub kind: GraphErrorKind,
 }
-impl std::fmt::Display for NotFoundNodeError {
+impl std::fmt::Display for GraphError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Not found node")
     }
 }
-impl std::error::Error for NotFoundNodeError {}
+impl std::error::Error for GraphError {}
 
+#[derive(Debug)]
+pub enum GraphErrorKind {
+    NotFoundNodeError(String)
+}
 #[cfg(test)]
 mod tests {
     use super::*;
