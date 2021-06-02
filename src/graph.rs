@@ -15,5 +15,5 @@
 mod digraph;
 mod node;
 
-pub use digraph::{DiGraph, GraphError, GraphErrorKind};
+pub use digraph::DiGraph;
 pub use node::DiNode;

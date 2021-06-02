@@ -15,7 +15,7 @@
 use super::node::DiNode;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::algorithm::isomorphism::GMGraph;
+use crate::{algorithm::isomorphism::GMGraph, error::{GraphError, GraphErrorKind}};
 
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct DiGraph {
@@ -250,22 +250,22 @@ impl GMGraph for DiGraph {
     }
 }
 
-#[derive(Debug)]
-pub struct GraphError {
-    pub message: String,
-    pub kind: GraphErrorKind,
-}
-impl std::fmt::Display for GraphError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Not found node")
-    }
-}
-impl std::error::Error for GraphError {}
+// #[derive(Debug)]
+// pub struct GraphError {
+//     pub message: String,
+//     pub kind: GraphErrorKind,
+// }
+// impl std::fmt::Display for GraphError {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         write!(f, "Not found node")
+//     }
+// }
+// impl std::error::Error for GraphError {}
 
-#[derive(Debug)]
-pub enum GraphErrorKind {
-    NotFoundNodeError(String)
-}
+// #[derive(Debug)]
+// pub enum GraphErrorKind {
+//     NotFoundNodeError(String)
+// }
 #[cfg(test)]
 mod tests {
     use super::*;
