@@ -131,6 +131,7 @@ where
         }
     }
 
+    /// Check if two nodes from graph and (sub)graph respectively are equal topologically
     pub fn syntactic_feasibility(&self, g1_node_name: String, g2_node_name: String) -> bool {
         let g1_node = self.g1.get_node(g1_node_name.as_str()).unwrap();
         let g2_node = self.g2.get_node(g2_node_name.as_str()).unwrap();
@@ -169,26 +170,15 @@ where
         true
     }
 
+    /// Check if two nodes from graph and (sub)graph respectively are equal semantically
     pub fn semantic_feasibility(&self, g1_node_name: String, g2_node_name: String) -> bool {
-        // check the weights of g1_node and g2_node
         let g1_node = self.g1.get_node(g1_node_name.as_str());
         let g2_node = self.g2.get_node(g2_node_name.as_str());
 
         if g1_node.is_some() && g2_node.is_some() {
             let node1 = g1_node.unwrap();
-            let weight1 = node1.get_weight();
             let node2 = g2_node.unwrap();
-            let weight2 = node2.get_weight();
-
-            if weight1.is_some() && weight2.is_some() {
-                let value1 = weight1.unwrap();
-                let value2 = weight2.unwrap();
-                if value1 != value2 {
-                    return false;
-                }
-            } else if weight1.is_some() || weight2.is_some() {
-                return false;
-            }
+            return node1.semantic_equal(node2);
         } else if g1_node.is_some() || g2_node.is_some() {
             return false;
         }
@@ -932,4 +922,5 @@ pub trait GMGraph {
 pub trait GMNode {
     fn get_name(&self) -> String;
     fn get_weight(&self) -> Option<String>;
+    fn semantic_equal(&self, other: &Self) -> bool;
 }

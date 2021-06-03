@@ -97,6 +97,22 @@ impl GMNode for DiNode {
         }
         None
     }
+    
+    fn semantic_equal(&self, other: &DiNode) -> bool {
+        let weight1 = self.get_weight();
+        let weight2 = other.get_weight();
+
+        if weight1.is_some() && weight2.is_some() {
+            let value1 = weight1.unwrap();
+            let value2 = weight2.unwrap();
+            if value1 != value2 {
+                return false;
+            }
+        } else if weight1.is_some() || weight2.is_some() {
+            return false;
+        }
+        true
+    }
 }
 
 #[cfg(test)]
