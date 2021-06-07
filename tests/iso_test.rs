@@ -51,21 +51,13 @@ fn iso_digraph_weight_test() {
 
     let mut matcher = iso::DiGraphMatcher::new(&g1, &g2);
     let mut mapping = Vec::new();
-    matcher.subgraph_isomorphisms_iter(&mut mapping);
+    matcher.subgraph_isomorphism_iter(&mut mapping);
 
     assert_eq!(mapping.len(), 1);
-    assert!(mapping[0]
-        .iter()
-        .any(|(g1_name, g2_name)| g1_name.as_str() == "B" && g2_name.as_str() == "1"));
-    assert!(mapping[0]
-        .iter()
-        .any(|(g1_name, g2_name)| g1_name.as_str() == "C" && g2_name.as_str() == "2"));
-    assert!(mapping[0]
-        .iter()
-        .any(|(g1_name, g2_name)| g1_name.as_str() == "D" && g2_name.as_str() == "3"));
-    assert!(mapping[0]
-        .iter()
-        .any(|(g1_name, g2_name)| g1_name.as_str() == "E" && g2_name.as_str() == "4"));
+    assert!(mapping[0].contains_key("1") && mapping[0].get("1").unwrap() == "B");
+    assert!(mapping[0].contains_key("2") && mapping[0].get("2").unwrap() == "C");
+    assert!(mapping[0].contains_key("3") && mapping[0].get("3").unwrap() == "D");
+    assert!(mapping[0].contains_key("4") && mapping[0].get("4").unwrap() == "E");
 }
 
 #[test]
@@ -88,7 +80,7 @@ fn iso_digraph_test() {
 
     let mut matcher = iso::DiGraphMatcher::new(&g1, &g2);
     let mut mapping = Vec::new();
-    matcher.subgraph_isomorphisms_iter(&mut mapping);
+    matcher.subgraph_isomorphism_iter(&mut mapping);
 
     assert_eq!(mapping.len(), 2);
 }

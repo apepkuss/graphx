@@ -100,21 +100,15 @@ where
         }
     }
 
-    pub fn subgraph_isomorphisms_iter(&mut self, mapping: &mut Vec<Vec<(String, String)>>) {
+    pub fn subgraph_isomorphism_iter(&mut self, mapping: &mut Vec<HashMap<String, String>>) {
         self.test = String::from("subgraph");
         let _state = DiGMState::create(self, None, None);
         self.try_match(mapping);
     }
 
-    pub fn try_match(&mut self, mapping: &mut Vec<Vec<(String, String)>>) {
+    pub fn try_match(&mut self, mapping: &mut Vec<HashMap<String, String>>) {
         if self.core_1.len() == self.g2.node_count() {
-            // Save the final mapping, otherwise garbage collection deletes it.
-            let res: Vec<(String, String)> = self
-                .core_1
-                .iter()
-                .map(|(g1_node_name, g2_node_name)| (g1_node_name.clone(), g2_node_name.clone()))
-                .collect();
-            mapping.push(res);
+            mapping.push(self.core_2.clone());
         } else {
             for (g1_node, g2_node) in self.candidate_paris_iter() {
                 if self.semantic_feasibility(g1_node.clone(), g2_node.clone()) {
