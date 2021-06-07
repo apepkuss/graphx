@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::graph::{DiGraph, DiNode};
 use std::collections::{HashMap, VecDeque};
+use std::hash::Hash;
 
 /// topological sort
-pub fn topsort(graph: &DiGraph) -> Vec<String> {
-    let mut map: HashMap<&DiNode, usize> = HashMap::new();
-    for name in graph.get_nodes().iter() {
-        let node = graph.get_node(name).unwrap();
+pub fn topsort(graph: &impl TSortGraph) -> Vec<String> {
+    let mut map = HashMap::new();
+    for node in graph.get_nodes() {
         map.insert(node, node.in_degree());
     }
-
+    // HashMap<&<T as TSortGraph>::Node, usize>
     let mut queue = VecDeque::new();
     for (&key, val) in map.iter() {
         if *val == 0 {
@@ -33,7 +32,7 @@ pub fn topsort(graph: &DiGraph) -> Vec<String> {
     let mut names = Vec::new();
     while queue.len() > 0 {
         let curr_node = queue.pop_front().unwrap();
-        names.push(curr_node.get_name());
+        names.push(curr_node.get_name().to_string());
         for name in curr_node.get_successors() {
             let succ = graph.get_node(name.as_str()).unwrap();
             let degree = map.get_mut(succ).unwrap();
@@ -45,6 +44,18 @@ pub fn topsort(graph: &DiGraph) -> Vec<String> {
     }
 
     names
+}
+
+pub trait TSortGraph {
+    type Node: TSortNode + Eq + Hash;
+    fn get_nodes(&self) -> Vec<&Self::Node>;
+    fn get_node(&self, name: &str) -> Option<&Self::Node>;
+}
+
+pub trait TSortNode {
+    fn get_name(&self) -> &str;
+    fn in_degree(&self) -> usize;
+    fn get_successors(&self) -> Vec<String>;
 }
 
 #[cfg(test)]
@@ -76,5 +87,17 @@ mod tests {
 
         let names = topsort(&g);
         assert!(names.len() == g.node_count());
+
+        println!("{:?}", names);
+
+        let sorted = names.iter().map(|x| x.as_str()).collect::<Vec<&str>>();
+        assert!(
+            sorted == vec!["A", "H", "D", "B", "C", "E", "F", "G", "I", "J"]
+                || sorted == vec!["A", "D", "H", "B", "C", "E", "F", "G", "I", "J"]
+                || sorted == vec!["D", "H", "A", "B", "C", "E", "F", "G", "I", "J"]
+                || sorted == vec!["D", "A", "H", "B", "C", "E", "F", "G", "I", "J"]
+                || sorted == vec!["H", "A", "D", "B", "C", "E", "F", "G", "I", "J"]
+                || sorted == vec!["H", "D", "A", "B", "C", "E", "F", "G", "I", "J"]
+        );
     }
 }

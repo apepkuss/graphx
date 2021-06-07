@@ -13,9 +13,12 @@
 // limitations under the License.
 
 use super::node::DiNode;
+use crate::{
+    algorithm::{isomorphism::GMGraph, topsort::TSortGraph},
+    error::{GraphError, GraphErrorKind},
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::{algorithm::isomorphism::GMGraph, error::{GraphError, GraphErrorKind}};
 
 #[derive(Debug, Eq, PartialEq, Deserialize, Serialize)]
 pub struct DiGraph {
@@ -96,12 +99,12 @@ impl DiGraph {
     pub fn node_count(&self) -> usize {
         self.nodes.len()
     }
-    
+
     pub fn predecessors(&self, name: &str) -> Result<Vec<&DiNode>, GraphError> {
         if !self.nodes.contains_key(name) {
             return Err(GraphError {
                 message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
             });
         }
 
@@ -120,7 +123,7 @@ impl DiGraph {
         if !self.nodes.contains_key(name) {
             return Err(GraphError {
                 message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
             });
         }
 
@@ -138,7 +141,7 @@ impl DiGraph {
         if !self.nodes.contains_key(name) {
             return Err(GraphError {
                 message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
             });
         }
 
@@ -150,7 +153,7 @@ impl DiGraph {
         if !self.nodes.contains_key(name) {
             return Err(GraphError {
                 message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
             });
         }
 
@@ -180,7 +183,7 @@ impl DiGraph {
 }
 impl GMGraph for DiGraph {
     type Node = DiNode;
-    
+
     fn node_count(&self) -> usize {
         self.nodes.len()
     }
@@ -217,7 +220,7 @@ impl GMGraph for DiGraph {
         if !self.nodes.contains_key(name) {
             return Err(GraphError {
                 message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
             });
         }
 
@@ -236,7 +239,7 @@ impl GMGraph for DiGraph {
         if !self.nodes.contains_key(name) {
             return Err(GraphError {
                 message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name))
+                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
             });
         }
 
@@ -249,23 +252,18 @@ impl GMGraph for DiGraph {
             .collect())
     }
 }
+impl TSortGraph for DiGraph {
+    type Node = DiNode;
 
-// #[derive(Debug)]
-// pub struct GraphError {
-//     pub message: String,
-//     pub kind: GraphErrorKind,
-// }
-// impl std::fmt::Display for GraphError {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         write!(f, "Not found node")
-//     }
-// }
-// impl std::error::Error for GraphError {}
+    fn get_nodes(&self) -> Vec<&DiNode> {
+        self.nodes.values().map(|x| x).collect()
+    }
 
-// #[derive(Debug)]
-// pub enum GraphErrorKind {
-//     NotFoundNodeError(String)
-// }
+    fn get_node(&self, name: &str) -> Option<&DiNode> {
+        self.nodes.get(name)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

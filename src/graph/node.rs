@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use crate::algorithm::{isomorphism::GMNode, topsort::TSortNode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
-use crate::algorithm::isomorphism::GMNode;
 
 #[derive(Debug, Eq, PartialEq, Clone, Deserialize, Serialize)]
 pub struct DiNode {
@@ -90,14 +90,14 @@ impl GMNode for DiNode {
     fn get_name(&self) -> String {
         self.name.clone()
     }
-    
+
     fn get_weight(&self) -> Option<String> {
         if self.weight.is_some() {
             return self.weight.clone();
         }
         None
     }
-    
+
     fn semantic_equal(&self, other: &DiNode) -> bool {
         let weight1 = self.get_weight();
         let weight2 = other.get_weight();
@@ -112,6 +112,19 @@ impl GMNode for DiNode {
             return false;
         }
         true
+    }
+}
+impl TSortNode for DiNode {
+    fn get_name(&self) -> &str {
+        self.name.as_str()
+    }
+
+    fn in_degree(&self) -> usize {
+        self.inputs.len()
+    }
+
+    fn get_successors(&self) -> Vec<String> {
+        self.outputs.iter().map(|x| x.clone()).collect()
     }
 }
 
