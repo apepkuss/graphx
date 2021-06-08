@@ -13,5 +13,5 @@
 // limitations under the License.
 
 pub mod algorithm;
-pub mod graph;
 pub mod error;
+pub mod graph;
