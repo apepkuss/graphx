@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::cmp::Reverse;
-use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::collections::HashMap;
 
 pub fn dijkstra(graph: &impl SPGraph, source: &str) -> HashMap<String, usize> {
     // dist[i]: distance from source to i
@@ -26,43 +25,40 @@ pub fn dijkstra(graph: &impl SPGraph, source: &str) -> HashMap<String, usize> {
         }
     }
 
-    // create a min_heap
-    let mut min_heap = BinaryHeap::new();
-    for (key, val) in dist.iter() {
-        min_heap.push(Reverse((val, key)));
-    }
+    println!("dist: {:?}", dist);
 
     // spt_set: shortest path tree set that keeps track of nodes included in the shortest path tree
-    let mut spt_set = HashSet::new();
-
-    while spt_set.len() < graph.node_count() {
+    let mut spt = HashMap::new();
+    while spt.len() < graph.node_count() {
         let (name, distance) = min_distance(&dist);
-        if !spt_set.contains(name.as_str()) {
-            spt_set.insert(name.clone());
+        dist.remove(name.as_str());
+        if !spt.contains_key(name.as_str()) {
+            spt.insert(name.clone(), distance.clone());
 
             // update distance from source to each child v of node
-            let node = graph.get_node(name.as_str()).unwrap();
-            let cnames = node.get_successors();
-            for cname in cnames.iter() {
-                let mut new_dist: usize = usize::MAX;
-                {
-                    new_dist = distance + graph.get_edge_weight(name.as_str(), cname).unwrap();
-                }
-                let cur_dist = dist.get_mut(cname).unwrap();
-                if new_dist <= *cur_dist {
-                    *cur_dist = new_dist;
+            let cnames = graph.get_successors(name.as_str());
+            if cnames.is_some() {
+                let cnames = cnames.unwrap();
+                for cname in cnames.iter() {
+                    if dist.contains_key(cname.as_str()) {
+                        let new_dist =
+                            distance + graph.get_edge_weight(name.as_str(), cname).unwrap();
+                        let cur_dist = dist.get_mut(cname).unwrap();
+                        if new_dist <= *cur_dist {
+                            *cur_dist = new_dist;
+                        }
+                    }
                 }
             }
         }
     }
-
-    dist.clone()
+    spt
 }
 
 fn min_distance(dist: &HashMap<String, usize>) -> (String, usize) {
     let mut d = &usize::MAX;
     let mut name = &String::new();
-    for (key, val) in dist {
+    for (key, val) in dist.iter() {
         if d > val {
             d = val;
             name = key;
@@ -72,30 +68,79 @@ fn min_distance(dist: &HashMap<String, usize>) -> (String, usize) {
 }
 
 pub trait SPGraph {
-    type Node: SPNode;
     fn node_count(&self) -> usize;
     fn get_nodes(&self) -> Vec<String>;
-    fn get_node(&self, name: &str) -> Option<&Self::Node>;
-    fn get_successors(&self) -> Vec<String>;
+    fn get_successors(&self, name: &str) -> Option<Vec<String>>;
     fn get_edge_weight(&self, source: &str, target: &str) -> Option<usize>;
 }
 
-pub trait SPNode {
-    fn get_successors(&self) -> Vec<String>;
+pub struct MyGraph {
+    edges: HashMap<String, HashMap<String, Option<usize>>>,
 }
-
-pub fn run() {
-    let mut map = HashMap::new();
-    map.insert("B", (2, "B"));
-    map.insert("E", (5, "E"));
-    map.insert("C", (3, "C"));
-
-    let mut min_heap = BinaryHeap::new();
-    for (_, val) in map.iter() {
-        min_heap.push(Reverse(val));
+impl MyGraph {
+    pub fn new() -> Self {
+        MyGraph {
+            edges: HashMap::new(),
+        }
     }
+    pub fn add_edge(&mut self, source: &str, target: &str, weight: usize) {
+        if source == target {
+            panic!("Cannot add a self loop");
+        }
+        if !self.edges.contains_key(source) {
+            self.edges.insert(source.to_string(), HashMap::new());
+        }
 
-    assert_eq!(min_heap.peek(), Some(&Reverse(&(2, "B"))));
+        if !self.edges.contains_key(target) {
+            self.edges.insert(target.to_string(), HashMap::new());
+        }
+
+        let map = self.edges.get_mut(source).unwrap();
+        map.entry(target.to_string())
+            .and_modify(|x| *x = Some(weight))
+            .or_insert(Some(weight));
+    }
+}
+impl SPGraph for MyGraph {
+    fn node_count(&self) -> usize {
+        self.edges.len()
+    }
+    fn get_nodes(&self) -> Vec<String> {
+        self.edges.keys().map(|x| x.clone()).collect()
+    }
+    fn get_successors(&self, name: &str) -> Option<Vec<String>> {
+        let succs = self.edges.get(name);
+        if succs.is_none() {
+            return None;
+        }
+
+        let names: Vec<String> = succs
+            .unwrap()
+            .iter()
+            .filter(|&(key, val)| key.as_str() != name && val.is_some())
+            .map(|(x, _)| x.clone())
+            .collect();
+        if names.len() == 0 {
+            return None;
+        }
+        Some(names)
+    }
+    fn get_edge_weight(&self, source: &str, target: &str) -> Option<usize> {
+        let succs = self.edges.get(source);
+        if succs.is_none() {
+            return None;
+        }
+
+        let succs = succs.unwrap();
+        if !succs.contains_key(target) {
+            return None;
+        }
+        let weight = succs.get(target).unwrap();
+        if weight.is_none() {
+            return None;
+        }
+        Some(weight.unwrap().clone())
+    }
 }
 
 #[cfg(test)]
@@ -103,7 +148,40 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_minheap() {
-        run();
+    fn test_sssp_dijkstra() {
+        let mut g = MyGraph::new();
+        g.add_edge("0", "1", 4);
+        g.add_edge("0", "7", 8);
+        g.add_edge("1", "7", 11);
+        g.add_edge("1", "2", 8);
+        g.add_edge("2", "3", 7);
+        g.add_edge("2", "5", 4);
+        g.add_edge("2", "8", 2);
+        g.add_edge("3", "4", 9);
+        g.add_edge("3", "5", 14);
+        g.add_edge("4", "5", 10);
+        g.add_edge("5", "6", 2);
+        g.add_edge("6", "7", 1);
+        g.add_edge("6", "8", 6);
+        g.add_edge("7", "8", 7);
+
+        let actual = dijkstra(&g, "0");
+
+        let tuples = vec![
+            ("7", 8),
+            ("0", 0),
+            ("8", 14),
+            ("5", 16),
+            ("1", 4),
+            ("4", 28),
+            ("2", 12),
+            ("6", 18),
+            ("3", 19),
+        ];
+        let expected: HashMap<String, usize> = tuples
+            .into_iter()
+            .map(|(x, y)| (x.to_string(), y))
+            .collect();
+        assert_eq!(expected, actual);
     }
 }

@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-mod amgraph;
 mod digraph;
 mod node;
 
-pub use amgraph::AMGraph;
 pub use digraph::DiGraph;
 pub use node::DiNode;
