@@ -17,4 +17,5 @@ GraphX is a library of graph algorithms, and it is in rust. The motivations of t
     * algorithm mod
         * Graph-subgraph isomorphism
         * Topsort
-        
+        * Single-source-shortest-path (SSSP) algorithms
+            * Dijkstra (weighted DAG) 
