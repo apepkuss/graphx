@@ -15,7 +15,7 @@
 use super::node::DiNode;
 use crate::{
     algorithm::{isomorphism::GMGraph, topsort::TSortGraph},
-    error::{GraphError, GraphErrorKind},
+    error::GraphError,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -102,10 +102,7 @@ impl DiGraph {
 
     pub fn predecessors(&self, name: &str) -> Result<Vec<&DiNode>, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(GraphError {
-                message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
-            });
+            return Err(GraphError::NotFoundNode(String::from(name)));
         }
 
         let node = self
@@ -121,10 +118,7 @@ impl DiGraph {
 
     pub fn successors(&self, name: &str) -> Result<Vec<&DiNode>, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(GraphError {
-                message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
-            });
+            return Err(GraphError::NotFoundNode(String::from(name)));
         }
 
         let node = self
@@ -139,10 +133,7 @@ impl DiGraph {
 
     pub fn in_degree(&self, name: &str) -> Result<usize, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(GraphError {
-                message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
-            });
+            return Err(GraphError::NotFoundNode(String::from(name)));
         }
 
         let node = self.nodes.get(name).unwrap();
@@ -151,10 +142,7 @@ impl DiGraph {
 
     pub fn out_degree(&self, name: &str) -> Result<usize, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(GraphError {
-                message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
-            });
+            return Err(GraphError::NotFoundNode(String::from(name)));
         }
 
         let node = self.nodes.get(name).unwrap();
@@ -172,7 +160,7 @@ impl DiGraph {
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         count
     }
@@ -199,7 +187,7 @@ impl GMGraph for DiGraph {
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         count
     }
@@ -218,10 +206,7 @@ impl GMGraph for DiGraph {
 
     fn predecessors(&self, name: &str) -> Result<Vec<&DiNode>, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(GraphError {
-                message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
-            });
+            return Err(GraphError::NotFoundNode(String::from(name)));
         }
 
         let node = self
@@ -237,10 +222,7 @@ impl GMGraph for DiGraph {
 
     fn successors(&self, name: &str) -> Result<Vec<&DiNode>, GraphError> {
         if !self.nodes.contains_key(name) {
-            return Err(GraphError {
-                message: format!("Not found node: {}", name),
-                kind: GraphErrorKind::NotFoundNodeError(format!("Not found node: {}", name)),
-            });
+            return Err(GraphError::NotFoundNode(String::from(name)));
         }
 
         let node = GMGraph::get_node(self, name)

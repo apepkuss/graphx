@@ -322,12 +322,12 @@ where
                                     return false;
                                 }
                             }
-                            Err(err) => panic!("{}", err.message),
+                            Err(err) => panic!("{}", err),
                         }
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
 
         let result_pred_2 = self.g2.predecessors(g2_node.get_name().as_str());
@@ -356,12 +356,12 @@ where
                                     return false;
                                 }
                             }
-                            Err(err) => panic!("{}", err.message),
+                            Err(err) => panic!("{}", err),
                         }
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         true
     }
@@ -395,12 +395,12 @@ where
                                     return false;
                                 }
                             }
-                            Err(err) => panic!("{}", err.message),
+                            Err(err) => panic!("{}", err),
                         }
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
 
         let result_succ = self.g2.successors(g2_node.get_name().as_str());
@@ -426,12 +426,12 @@ where
                                     return false;
                                 }
                             }
-                            Err(err) => panic!("{}", err.message),
+                            Err(err) => panic!("{}", err),
                         }
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
 
         true
@@ -457,7 +457,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
 
         let mut num2 = 0;
@@ -472,7 +472,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         if self.test == "graph" {
             if !(num1 == num2) {
@@ -498,7 +498,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
 
         let mut num2 = 0;
@@ -513,7 +513,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         if self.test == "graph" {
             if !(num1 == num2) {
@@ -548,7 +548,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         let mut num2 = 0;
         let result_pred = self.g2.predecessors(g2_node.get_name().as_str());
@@ -562,7 +562,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         if self.test == "graph" {
             if !(num1 == num2) {
@@ -589,7 +589,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         let mut num2 = 0;
         let result_succ = self.g2.successors(g2_node.get_name().as_str());
@@ -603,7 +603,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         if self.test == "graph" {
             if !(num1 == num2) {
@@ -637,7 +637,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         let mut num2 = 0;
         let result_pred = self.g2.predecessors(g2_node.get_name().as_str());
@@ -651,7 +651,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         if self.test == "graph" {
             if !(num1 == num2) {
@@ -679,7 +679,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         let mut num2 = 0;
         let result_succ = self.g2.successors(g2_node.get_name().as_str());
@@ -693,7 +693,7 @@ where
                     }
                 }
             }
-            Err(err) => panic!("{}", err.message),
+            Err(err) => panic!("{}", err),
         }
         if self.test == "graph" {
             if !(num1 == num2) {
@@ -760,7 +760,7 @@ impl DiGMState {
                             }
                         }
                     }
-                    Err(err) => panic!("{}", err.message),
+                    Err(err) => panic!("{}", err),
                 }
             }
             for node in new_nodes {
@@ -779,7 +779,7 @@ impl DiGMState {
                             }
                         }
                     }
-                    Err(err) => panic!("{}", err.message),
+                    Err(err) => panic!("{}", err),
                 }
             }
             for node in new_nodes {
@@ -798,7 +798,7 @@ impl DiGMState {
                             }
                         }
                     }
-                    Err(err) => panic!("{}", err.message),
+                    Err(err) => panic!("{}", err),
                 }
             }
             for node in new_nodes {
@@ -820,7 +820,7 @@ impl DiGMState {
                             }
                         }
                     }
-                    Err(err) => panic!("{}", err.message),
+                    Err(err) => panic!("{}", err),
                 }
             }
             for node in new_nodes {
