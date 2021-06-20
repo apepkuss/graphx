@@ -25,8 +25,6 @@ pub fn dijkstra(graph: &impl SPGraph, source: &str) -> HashMap<String, usize> {
         }
     }
 
-    println!("dist: {:?}", dist);
-
     // spt_set: shortest path tree set that keeps track of nodes included in the shortest path tree
     let mut spt = HashMap::new();
     while spt.len() < graph.node_count() {
